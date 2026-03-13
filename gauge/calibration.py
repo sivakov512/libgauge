@@ -13,3 +13,16 @@ def calculate_background_frame(frames: list[common.Frame]) -> common.Frame:
         width=frames[0].width,
         height=frames[0].height,
     )
+
+
+def subtract_background(frame: common.Frame, bg: common.Frame) -> common.Frame:
+    buf = [0] * frame.length
+
+    for i in range(frame.length):
+        buf[i] = abs(frame.buf[i] - bg.buf[i])
+
+    return common.Frame(
+        buf=tuple(buf),
+        width=frame.width,
+        height=frame.height,
+    )
