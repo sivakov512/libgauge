@@ -1,3 +1,4 @@
+import dataclasses
 import os
 import typing
 from dataclasses import dataclass
@@ -46,3 +47,6 @@ class Frame:
 
     def to_jpeg(self) -> PIL.Image.Image:
         return PIL.Image.frombytes("L", (self.width, self.height), bytes(self.buf))
+
+    def __json__(self) -> dict[str, typing.Any]:
+        return dataclasses.asdict(self)
