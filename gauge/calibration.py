@@ -5,15 +5,15 @@ BINARIZE_UP = 1
 BINARIZE_DOWN = 0
 
 
-def calculate_background_frame(frames: list[common.Frame]) -> common.Frame:
-    bg_frame = list(frames[0].buf)
+def calculate_background(frames: list[common.Frame]) -> common.Frame:
+    buf = list(frames[0].buf)
 
     for frame in frames[1:]:
         for i in range(frame.length):
-            bg_frame[i] = max(bg_frame[i], frame.buf[i])
+            buf[i] = max(buf[i], frame.buf[i])
 
     return common.Frame(
-        buf=tuple(bg_frame),
+        buf=tuple(buf),
         width=frames[0].width,
         height=frames[0].height,
     )

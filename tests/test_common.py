@@ -2,7 +2,7 @@ from gauge.common import Frame
 from tests import utils
 
 
-def test_from_image_returns_expected_frame(fixtures: utils.Fixtures) -> None:
+def test_frame_from_image_returns_expected_frame(fixtures: utils.Fixtures) -> None:
     expected_frame = fixtures.read_json("common/sample_grayscaled_1.json", list[int])
 
     with fixtures.open_image("common/sample_1.jpg") as img:
@@ -13,7 +13,7 @@ def test_from_image_returns_expected_frame(fixtures: utils.Fixtures) -> None:
     assert fb.height == 240
 
 
-def test_from_images_dir_returns_expected_frames(
+def test_frame_from_images_dir_returns_expected_frames(
     fixtures: utils.Fixtures,
 ) -> None:
     expected_frame = fixtures.read_json("common/sample_grayscaled_1.json", list[int])
@@ -25,7 +25,7 @@ def test_from_images_dir_returns_expected_frames(
     assert frames[0].height == 240
 
 
-def test_from_images_dir_returns_expected_frames_count(
+def test_frame_from_images_dir_returns_expected_frames_count(
     fixtures: utils.Fixtures,
 ) -> None:
     frames = Frame.from_images_dir(fixtures.fpath("calibration/1"))
@@ -33,7 +33,7 @@ def test_from_images_dir_returns_expected_frames_count(
     assert len(frames) == 21
 
 
-def test_to_jpeg_returns_expected_image(fixtures: utils.Fixtures) -> None:
+def test_frame_to_jpeg_returns_expected_image(fixtures: utils.Fixtures) -> None:
     with fixtures.open_image("common/sample_1.jpg") as original:
         fb = Frame.from_image(original)
 
