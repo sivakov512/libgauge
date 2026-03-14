@@ -111,12 +111,53 @@ def test_binarize(
     example_jpeg_path: str,
     fixtures: utils.Fixtures,
 ) -> None:
-    frame = common.Frame(
-        buf=tuple(fixtures.read_json(frame_path, list[int])), width=320, height=240
-    )
+    frame = fixtures.read_frame(frame_path)
     expected_buf = tuple(fixtures.read_json(exp_path, list[int]))
 
     got = calibration.binarize(frame)
+
+    if update_artifacts:
+        fixtures.write_json(exp_path, got.buf, tuple[int, ...])
+        jpeg_friendly = common.Frame(
+            buf=tuple(255 if el == calibration.BINARIZE_UP else el for el in got.buf),
+            width=got.width,
+            height=got.height,
+        )
+        fixtures.save_image(example_jpeg_path, jpeg_friendly.to_jpeg())
+
+    assert got.buf == expected_buf
+
+
+@pytest.mark.parametrize(
+    ("frame_path", "exp_path", "update_artifacts", "example_jpeg_path"),
+    [
+        (
+            "calibration/1/binarized_767591132.json",
+            "calibration/1/largest_blob_767591132.json",
+            False,
+            "calibration/1/examples/largest_blob_767591132.jpg",
+        ),
+        (
+            "calibration/1/binarized_12756622577.json",
+            "calibration/1/largest_blob_12756622577.json",
+            False,
+            "calibration/1/examples/largest_blob_12756622577.jpg",
+        ),
+    ],
+)
+def test_extract_largest_blob_returns_expected(
+    frame_path: str,
+    exp_path: str,
+    update_artifacts: bool,
+    example_jpeg_path: str,
+    fixtures: utils.Fixtures,
+) -> None:
+    frame = fixtures.read_frame(frame_path)
+    expected_buf = tuple(fixtures.read_json(exp_path, list[int]))
+
+    got = calibration.extract_largest_blob(frame)
+
+    assert got is not None
 
     if update_artifacts:
         fixtures.write_json(exp_path, got.buf, tuple[int, ...])

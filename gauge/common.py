@@ -17,6 +17,10 @@ class Frame:
     def length(self) -> int:
         return len(self.buf)
 
+    def pixel(self, x: int, y: int) -> tuple[int, int]:
+        index = y * self.width + x
+        return index, self.buf[index]
+
     @classmethod
     def from_image(cls, image: PIL.Image.Image) -> typing.Self:
         grayscale = image.convert("L")
