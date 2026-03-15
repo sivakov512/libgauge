@@ -15,6 +15,12 @@ from gauge import calibration, common
 FRAME_WIDTH = 320
 FRAME_HEIGHT = 240
 
+RED_PIXEL = (255, 0, 0)
+GREEN_PIXEL = (0, 255, 0)
+
+LINE_SIDE_THICKNESS = 1
+CENTER_OF_MASS_THICKNESS = 3
+
 _JSON_T = typing.TypeVar("_JSON_T")
 
 
@@ -61,11 +67,35 @@ def unbinarize(frame: common.Frame) -> common.Frame:
     )
 
 
+def draw_line(frame: common.Frame | Image.Image, line: common.Line) -> Image.Image:
+    img = (frame.to_jpeg() if isinstance(frame, common.Frame) else frame).convert("RGB")
+
+    for offset in range(-LINE_SIDE_THICKNESS, LINE_SIDE_THICKNESS + 1):
+        for t in range(-max(frame.width, frame.height), max(frame.width, frame.height)):
+            x = int(line.mx + t * line.vx + offset * (-line.vy))
+            y = int(line.my + t * line.vy + offset * line.vx)
+            if 0 <= x < frame.width and 0 <= y <= frame.height:
+                img.putpixel((x, y), RED_PIXEL)
+
+    for dy in range(-CENTER_OF_MASS_THICKNESS, CENTER_OF_MASS_THICKNESS + 1):
+        for dx in range(-CENTER_OF_MASS_THICKNESS, CENTER_OF_MASS_THICKNESS + 1):
+            x = int(line.mx + dx)
+            y = int(line.my + dy)
+            if 0 <= x < frame.width and 0 <= y <= frame.height:
+                img.putpixel((x, y), GREEN_PIXEL)
+
+    return img
+
+
 @dataclass
 class ExampleSaver:
     _request: pytest.FixtureRequest
 
-    def __call__(self, frame: common.Frame) -> None:
+    def __call__(
+        self,
+        frame: common.Frame | Image.Image | typing.Any,
+        name_postfix: str | None = None,
+    ) -> None:
         if not self._request.config.getoption("--save-examples"):
             return
         test_file = self._request.path
@@ -73,7 +103,15 @@ class ExampleSaver:
         examples_dir.mkdir(parents=True, exist_ok=True)
         safe_name = self._request.node.name.replace("/", "")  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType]
 
-        frame.to_jpeg().save(examples_dir / f"{safe_name}.jpg")
+        if name_postfix is not None:
+            safe_name = f"{safe_name}_{name_postfix}"
+
+        if isinstance(frame, common.Frame):
+            frame.to_jpeg().save(examples_dir / f"{safe_name}.jpg")
+        elif isinstance(frame, Image.Image):
+            frame.save(examples_dir / f"{safe_name}.jpg")
+        else:
+            raise TypeError(f"Unsupported frame type: {type(frame)}")  # pyright: ignore[reportAny]
 
 
 @typing.final

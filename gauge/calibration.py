@@ -1,3 +1,5 @@
+import math
+
 from gauge import common
 
 BINARIZE_THRESHOLD = 20
@@ -100,3 +102,72 @@ def extract_largest_blob(frame: common.Frame) -> common.Frame | None:
         width=frame.width,
         height=frame.height,
     )
+
+
+def _center_of_mass(frame: common.Frame) -> tuple[float, float]:
+    sum_x = 0
+    sum_y = 0
+    count = 0
+
+    for y in range(frame.height):
+        for x in range(frame.width):
+            _, value = frame.pixel(x, y)
+
+            if value == BINARIZE_UP:
+                sum_x += x
+                sum_y += y
+                count += 1
+
+    if count == 0:
+        return 0, 0
+    return sum_x / count, sum_y / count
+
+
+def _principal_axis(frame: common.Frame, mx: float, my: float) -> tuple[float, float]:
+    cxx = 0.0
+    cxy = 0.0
+    cyy = 0.0
+    count = 0
+
+    # Covariance matrix
+    for y in range(frame.height):
+        for x in range(frame.width):
+            _, value = frame.pixel(x, y)
+            if value == BINARIZE_UP:
+                dx = x - mx
+                dy = y - my
+                cxx += dx * dx
+                cxy += dx * dy
+                cyy += dy * dy
+                count += 1
+    cxx /= count
+    cxy /= count
+    cyy /= count
+
+    # lambda1
+    trace = cxx + cyy
+    det = cxx * cyy - cxy * cxy
+    D = trace * trace - 4 * det
+    sqrt_D = math.sqrt(max(0.0, D))
+    lambda1 = (trace + sqrt_D) / 2.0
+
+    # lambda1 vector
+    if abs(cxy) > 1e-6:  # float usually not equal to zero
+        vx = cxy
+        vy = lambda1 - cxx
+    else:
+        if cxx > cyy:
+            vx, vy = 1.0, 0.0
+        else:
+            vx, vy = 0.0, 1.0
+
+    # normalize vector length
+    length = math.sqrt(vx * vx + vy * vy)
+
+    return vx / length, vy / length
+
+
+def blob_to_line(frame: common.Frame) -> common.Line:
+    mx, my = _center_of_mass(frame)
+    vx, vy = _principal_axis(frame, mx, my)
+    return common.Line(mx=mx, my=my, vx=vx, vy=vy)

@@ -50,3 +50,11 @@ class Frame:
 
     def __json__(self) -> dict[str, typing.Any]:
         return dataclasses.asdict(self)
+
+
+@dataclass
+class Line:
+    mx: float
+    my: float
+    vx: float
+    vy: float
