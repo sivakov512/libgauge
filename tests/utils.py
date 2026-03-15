@@ -19,7 +19,7 @@ RED_PIXEL = (255, 0, 0)
 GREEN_PIXEL = (0, 255, 0)
 
 LINE_SIDE_THICKNESS = 1
-CENTER_OF_MASS_THICKNESS = 3
+POINT_THICKNESS = 3
 
 _JSON_T = typing.TypeVar("_JSON_T")
 
@@ -34,21 +34,8 @@ class Fixtures:
     def open_image(self, path: str) -> ImageFile.ImageFile:
         return Image.open(self.fpath(path))
 
-    def save_image(self, path: str, image: Image.Image) -> None:
-        image.save(self.fpath(path))
-
     def read_json(self, path: str, _type: type[_JSON_T]) -> _JSON_T:
         return typing.cast(_JSON_T, json.loads(self.fpath(path).read_text()))
-
-    def write_json(self, path: str, data: _JSON_T, _type: type[_JSON_T]) -> None:
-        _ = self.fpath(path).write_text(json.dumps(data))
-
-    def read_frame(self, path: str) -> common.Frame:
-        return common.Frame(
-            buf=tuple(self.read_json(path, list[int])),
-            width=FRAME_WIDTH,
-            height=FRAME_HEIGHT,
-        )
 
     def load_frame(self, path: str) -> common.Frame:
         data = self.read_json(path, dict[str, list[int] | int])
@@ -57,6 +44,10 @@ class Fixtures:
             width=typing.cast(int, data["width"]),
             height=typing.cast(int, data["height"]),
         )
+
+    def load_line(self, path: str) -> common.Line:
+        data = self.read_json(path, dict[str, float])
+        return common.Line(mx=data["mx"], my=data["my"], vx=data["vx"], vy=data["vy"])
 
 
 def unbinarize(frame: common.Frame) -> common.Frame:
@@ -77,12 +68,25 @@ def draw_line(frame: common.Frame | Image.Image, line: common.Line) -> Image.Ima
             if 0 <= x < frame.width and 0 <= y <= frame.height:
                 img.putpixel((x, y), RED_PIXEL)
 
-    for dy in range(-CENTER_OF_MASS_THICKNESS, CENTER_OF_MASS_THICKNESS + 1):
-        for dx in range(-CENTER_OF_MASS_THICKNESS, CENTER_OF_MASS_THICKNESS + 1):
+    for dy in range(-POINT_THICKNESS, POINT_THICKNESS + 1):
+        for dx in range(-POINT_THICKNESS, POINT_THICKNESS + 1):
             x = int(line.mx + dx)
             y = int(line.my + dy)
             if 0 <= x < frame.width and 0 <= y <= frame.height:
                 img.putpixel((x, y), GREEN_PIXEL)
+
+    return img
+
+
+def draw_point(frame: common.Frame | Image.Image, x: float, y: float) -> Image.Image:
+    img = (frame.to_jpeg() if isinstance(frame, common.Frame) else frame).convert("RGB")
+
+    for dy in range(-POINT_THICKNESS, POINT_THICKNESS + 1):
+        for dx in range(-POINT_THICKNESS, POINT_THICKNESS + 1):
+            draw_x = int(x + dx)
+            draw_y = int(y + dy)
+            if 0 <= draw_x < frame.width and 0 <= draw_y <= frame.height:
+                img.putpixel((draw_x, draw_y), GREEN_PIXEL)
 
     return img
 

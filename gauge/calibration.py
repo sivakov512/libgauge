@@ -171,3 +171,17 @@ def blob_to_line(frame: common.Frame) -> common.Line:
     mx, my = _center_of_mass(frame)
     vx, vy = _principal_axis(frame, mx, my)
     return common.Line(mx=mx, my=my, vx=vx, vy=vy)
+
+
+def intersect(line1: common.Line, line2: common.Line) -> tuple[float, float] | None:
+    dx = line2.mx - line1.mx
+    dy = line2.my - line1.my
+
+    cross = line1.vx * line2.vy - line1.vy * line2.vx
+
+    if abs(cross) < 1e-6:
+        return None
+
+    t = (dx * line2.vy - dy * line2.vx) / cross
+
+    return line1.mx + t * line1.vx, line1.my + t * line1.vy

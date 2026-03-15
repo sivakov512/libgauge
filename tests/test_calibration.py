@@ -128,3 +128,58 @@ def test_blob_to_line(
     save_example(utils.draw_line(source_image, got), "on_source")
 
     assert got == snap_json
+
+
+@pytest.mark.parametrize(
+    ("line1_path", "line2_path", "source_images_path"),
+    [
+        (
+            "calibration/1/767591132_line.json",
+            "calibration/1/12756622577_line.json",
+            ("calibration/1/767591132.jpg", "calibration/1/12756622577.jpg"),
+        ),
+    ],
+)
+def test_intersect(
+    line1_path: str,
+    line2_path: str,
+    source_images_path: tuple[str, ...],
+    fixtures: utils.Fixtures,
+    snap_json: SnapshotAssertion,
+    save_example: utils.ExampleSaver,
+) -> None:
+    line1 = fixtures.load_line(line1_path)
+    line2 = fixtures.load_line(line2_path)
+
+    got = calibration.intersect(line1, line2)
+
+    assert got is not None
+
+    for i, source_image_path in enumerate(source_images_path):
+        source_image = fixtures.open_image(source_image_path)
+        save_example(utils.draw_point(source_image, *got), f"on_{i}")
+
+    assert got == snap_json
+
+
+@pytest.mark.parametrize(
+    ("line1_path", "line2_path"),
+    [
+        (
+            "calibration/1/767591132_line.json",
+            "calibration/1/12756622577_line.json",
+        ),
+    ],
+)
+def test_intersect_doesnt_depend_on_order(
+    line1_path: str,
+    line2_path: str,
+    fixtures: utils.Fixtures,
+) -> None:
+    line1 = fixtures.load_line(line1_path)
+    line2 = fixtures.load_line(line2_path)
+
+    got = calibration.intersect(line1, line2)
+    got_reversed = calibration.intersect(line2, line1)
+
+    assert got == got_reversed
