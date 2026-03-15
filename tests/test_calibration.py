@@ -123,9 +123,13 @@ def test_blob_to_line(
 
     got = calibration.blob_to_line(frame)
 
-    save_example(utils.draw_line(utils.unbinarize(frame), got), "on_largest")
+    example = utils.draw_line(utils.unbinarize(frame), got)
+    example = utils.draw_point(example, got.mx, got.my)
+    save_example(example, "on_largest")
     source_image = fixtures.open_image(source_image_path)
-    save_example(utils.draw_line(source_image, got), "on_source")
+    example = utils.draw_line(source_image, got)
+    example = utils.draw_point(example, got.mx, got.my)
+    save_example(example, "on_source")
 
     assert got == snap_json
 
@@ -183,3 +187,33 @@ def test_intersect_doesnt_depend_on_order(
     got_reversed = calibration.intersect(line2, line1)
 
     assert got == got_reversed
+
+
+@pytest.mark.parametrize(
+    ("source_images_dir", "source_images_path"),
+    [
+        [
+            "calibration/1",
+            ("calibration/1/767591132.jpg", "calibration/1/12756622577.jpg"),
+        ],
+    ],
+)
+@pytest.mark.wip
+def test_calculate(
+    source_images_dir: str,
+    source_images_path: tuple[str, ...],
+    fixtures: utils.Fixtures,
+    snap_json: SnapshotAssertion,
+    save_example: utils.ExampleSaver,
+) -> None:
+    frames = common.Frame.from_images_dir(fixtures.fpath(source_images_dir))
+
+    got = calibration.calculate(frames)
+
+    assert got is not None
+
+    for i, source_image_path in enumerate(source_images_path):
+        source_image = fixtures.open_image(source_image_path)
+        save_example(utils.draw_calibration_data(source_image, got), f"on_{i}")
+
+    assert got == snap_json

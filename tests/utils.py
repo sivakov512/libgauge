@@ -1,4 +1,5 @@
 import json
+import math
 import typing
 from dataclasses import dataclass
 from pathlib import Path
@@ -17,6 +18,7 @@ FRAME_HEIGHT = 240
 
 RED_PIXEL = (255, 0, 0)
 GREEN_PIXEL = (0, 255, 0)
+BLUE_PIXEL = (0, 0, 255)
 
 LINE_SIDE_THICKNESS = 1
 POINT_THICKNESS = 3
@@ -58,7 +60,11 @@ def unbinarize(frame: common.Frame) -> common.Frame:
     )
 
 
-def draw_line(frame: common.Frame | Image.Image, line: common.Line) -> Image.Image:
+def draw_line(
+    frame: common.Frame | Image.Image,
+    line: common.Line,
+    color: tuple[int, int, int] = RED_PIXEL,
+) -> Image.Image:
     img = (frame.to_jpeg() if isinstance(frame, common.Frame) else frame).convert("RGB")
 
     for offset in range(-LINE_SIDE_THICKNESS, LINE_SIDE_THICKNESS + 1):
@@ -66,19 +72,38 @@ def draw_line(frame: common.Frame | Image.Image, line: common.Line) -> Image.Ima
             x = int(line.mx + t * line.vx + offset * (-line.vy))
             y = int(line.my + t * line.vy + offset * line.vx)
             if 0 <= x < frame.width and 0 <= y <= frame.height:
-                img.putpixel((x, y), RED_PIXEL)
-
-    for dy in range(-POINT_THICKNESS, POINT_THICKNESS + 1):
-        for dx in range(-POINT_THICKNESS, POINT_THICKNESS + 1):
-            x = int(line.mx + dx)
-            y = int(line.my + dy)
-            if 0 <= x < frame.width and 0 <= y <= frame.height:
-                img.putpixel((x, y), GREEN_PIXEL)
+                img.putpixel((x, y), color)
 
     return img
 
 
-def draw_point(frame: common.Frame | Image.Image, x: float, y: float) -> Image.Image:
+def draw_vector(
+    frame: common.Frame | Image.Image,
+    pivot: tuple[float, float],
+    angle: float,
+    color: tuple[int, int, int] = RED_PIXEL,
+) -> Image.Image:
+    img = (frame.to_jpeg() if isinstance(frame, common.Frame) else frame).convert("RGB")
+
+    cos_a = math.cos(angle)
+    sin_a = math.sin(angle)
+
+    for offset in range(-LINE_SIDE_THICKNESS, LINE_SIDE_THICKNESS + 1):
+        for t in range(0, max(frame.width, frame.height)):
+            x = int(pivot[0] + t * cos_a + offset * (-sin_a))
+            y = int(pivot[1] + t * sin_a + offset * cos_a)
+            if 0 <= x < frame.width and 0 <= y <= frame.height:
+                img.putpixel((x, y), color)
+
+    return img
+
+
+def draw_point(
+    frame: common.Frame | Image.Image,
+    x: float,
+    y: float,
+    color: tuple[int, int, int] = GREEN_PIXEL,
+) -> Image.Image:
     img = (frame.to_jpeg() if isinstance(frame, common.Frame) else frame).convert("RGB")
 
     for dy in range(-POINT_THICKNESS, POINT_THICKNESS + 1):
@@ -86,9 +111,20 @@ def draw_point(frame: common.Frame | Image.Image, x: float, y: float) -> Image.I
             draw_x = int(x + dx)
             draw_y = int(y + dy)
             if 0 <= draw_x < frame.width and 0 <= draw_y <= frame.height:
-                img.putpixel((draw_x, draw_y), GREEN_PIXEL)
+                img.putpixel((draw_x, draw_y), color)
 
     return img
+
+
+def draw_calibration_data(
+    frame: common.Frame | Image.Image, data: calibration.CalibrationData
+) -> Image.Image:
+    img = (frame.to_jpeg() if isinstance(frame, common.Frame) else frame).convert("RGB")
+
+    img = draw_vector(img, (data.pivot_x, data.pivot_y), data.angle_min, BLUE_PIXEL)
+    img = draw_vector(img, (data.pivot_x, data.pivot_y), data.angle_max, RED_PIXEL)
+
+    return draw_point(img, data.pivot_x, data.pivot_y, GREEN_PIXEL)
 
 
 @dataclass

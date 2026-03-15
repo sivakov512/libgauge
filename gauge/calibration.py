@@ -1,10 +1,12 @@
 import math
+from dataclasses import dataclass
 
 from gauge import common
 
 BINARIZE_THRESHOLD = 20
 BINARIZE_UP = 1
 BINARIZE_DOWN = 0
+DIRECTION_SEARCH_STEP_RADIANS = 0.175
 
 NEIGHBORHOOD_8 = ((-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (1, -1), (-1, 1), (1, 1))
 
@@ -185,3 +187,71 @@ def intersect(line1: common.Line, line2: common.Line) -> tuple[float, float] | N
     t = (dx * line2.vy - dy * line2.vx) / cross
 
     return line1.mx + t * line1.vx, line1.my + t * line1.vy
+
+
+@dataclass
+class CalibrationData:
+    pivot_x: float
+    pivot_y: float
+    angle_min: float
+    angle_max: float
+    direction: int
+
+
+def _frame_line(frame: common.Frame, bg: common.Frame) -> common.Line | None:
+    got_ = subtract_background(frame, bg)
+    got_ = binarize(got_)
+    got = extract_largest_blob(got_)
+    if got is None:
+        return None
+
+    return blob_to_line(got)
+
+
+def _frame_angle(
+    frame: common.Frame, bg: common.Frame, pivot: tuple[float, float]
+) -> float | None:
+    got_ = subtract_background(frame, bg)
+    got_ = binarize(got_)
+    got = extract_largest_blob(got_)
+    if got is None:
+        return None
+
+    mx, my = _center_of_mass(got)
+    return math.atan2(my - pivot[1], mx - pivot[0])
+
+
+def calculate(frames: list[common.Frame]) -> CalibrationData | None:
+    bg = calculate_background(frames)
+
+    min_line = _frame_line(frames[0], bg)
+    if min_line is None:
+        return None
+
+    max_line = _frame_line(frames[-1], bg)
+    if max_line is None:
+        return None
+
+    pivot = intersect(min_line, max_line)
+    if pivot is None:
+        return None
+
+    min_angle = math.atan2(min_line.my - pivot[1], min_line.mx - pivot[0])
+
+    direction = 0
+    for frame in frames[1:-1]:
+        angle = _frame_angle(frame, bg, pivot)
+        if angle is None:
+            continue
+        diff = angle - min_angle
+        if abs(diff) >= DIRECTION_SEARCH_STEP_RADIANS:
+            direction = 1 if diff > 0 else -1
+            break
+    else:
+        return None
+
+    max_angle = math.atan2(max_line.my - pivot[1], max_line.mx - pivot[0])
+
+    return CalibrationData(
+        *pivot, angle_min=min_angle, angle_max=max_angle, direction=direction
+    )

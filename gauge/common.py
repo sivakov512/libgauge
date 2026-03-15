@@ -4,6 +4,7 @@ import typing
 from dataclasses import dataclass
 
 import PIL.Image
+from natsort import natsorted
 
 StrPath = str | os.PathLike[str]
 
@@ -34,7 +35,7 @@ class Frame:
 
     @classmethod
     def from_images_dir(cls, dir_path: StrPath) -> list[typing.Self]:
-        fnames = sorted(
+        fnames = natsorted(
             el for el in os.listdir(dir_path) if el.endswith((".jpg", ".jpeg"))
         )
 
