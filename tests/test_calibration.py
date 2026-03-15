@@ -11,7 +11,7 @@ EXPECTED_HEIGHT = utils.FRAME_HEIGHT
 @pytest.mark.parametrize(
     ("source_images_dir",),
     [
-        ["calibration/1"],
+        ["set/1"],
     ],
 )
 def test_calculate_background(
@@ -35,12 +35,12 @@ def test_calculate_background(
     ),
     [
         (
-            "calibration/1/767591132.jpg",
-            "calibration/1/background.json",
+            "set/1/767591132.jpg",
+            "set/1/background.json",
         ),
         (
-            "calibration/1/12756622577.jpg",
-            "calibration/1/background.json",
+            "set/1/12756622577.jpg",
+            "set/1/background.json",
         ),
     ],
 )
@@ -64,8 +64,8 @@ def test_subtract_background(
 @pytest.mark.parametrize(
     "frame_path",
     [
-        "calibration/1/767591132_subtracted.json",
-        "calibration/1/12756622577_subtracted.json",
+        "set/1/767591132_subtracted.json",
+        "set/1/12756622577_subtracted.json",
     ],
 )
 def test_binarize(
@@ -85,8 +85,8 @@ def test_binarize(
 @pytest.mark.parametrize(
     "frame_path",
     [
-        "calibration/1/767591132_binarized.json",
-        "calibration/1/12756622577_binarized.json",
+        "set/1/767591132_binarized.json",
+        "set/1/12756622577_binarized.json",
     ],
 )
 def test_extract_largest_blob_returns_expected(
@@ -108,8 +108,8 @@ def test_extract_largest_blob_returns_expected(
 @pytest.mark.parametrize(
     ("frame_path", "source_image_path"),
     [
-        ("calibration/1/767591132_largest.json", "calibration/1/767591132.jpg"),
-        ("calibration/1/12756622577_largest.json", "calibration/1/12756622577.jpg"),
+        ("set/1/767591132_largest.json", "set/1/767591132.jpg"),
+        ("set/1/12756622577_largest.json", "set/1/12756622577.jpg"),
     ],
 )
 def test_blob_to_line(
@@ -138,9 +138,9 @@ def test_blob_to_line(
     ("line1_path", "line2_path", "source_images_path"),
     [
         (
-            "calibration/1/767591132_line.json",
-            "calibration/1/12756622577_line.json",
-            ("calibration/1/767591132.jpg", "calibration/1/12756622577.jpg"),
+            "set/1/767591132_line.json",
+            "set/1/12756622577_line.json",
+            ("set/1/767591132.jpg", "set/1/12756622577.jpg"),
         ),
     ],
 )
@@ -170,8 +170,8 @@ def test_intersect(
     ("line1_path", "line2_path"),
     [
         (
-            "calibration/1/767591132_line.json",
-            "calibration/1/12756622577_line.json",
+            "set/1/767591132_line.json",
+            "set/1/12756622577_line.json",
         ),
     ],
 )
@@ -193,8 +193,8 @@ def test_intersect_doesnt_depend_on_order(
     ("source_images_dir", "source_images_path"),
     [
         [
-            "calibration/1",
-            ("calibration/1/767591132.jpg", "calibration/1/12756622577.jpg"),
+            "set/1",
+            ("set/1/767591132.jpg", "set/1/12756622577.jpg"),
         ],
     ],
 )

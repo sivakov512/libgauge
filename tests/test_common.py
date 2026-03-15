@@ -24,7 +24,7 @@ def test_frame_from_images_dir_returns_expected_frames(
 def test_frame_from_images_dir_returns_expected_frames_count(
     fixtures: utils.Fixtures,
 ) -> None:
-    frames = Frame.from_images_dir(fixtures.fpath("calibration/1"))
+    frames = Frame.from_images_dir(fixtures.fpath("set/1"))
 
     assert len(frames) == 21
 
