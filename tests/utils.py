@@ -59,6 +59,7 @@ class Fixtures:
             angle_min=typing.cast(float, data["angle_min"]),
             angle_max=typing.cast(float, data["angle_max"]),
             direction=typing.cast(int, data["direction"]),
+            length=typing.cast(float, data["length"]),
         )
 
 
@@ -92,14 +93,16 @@ def draw_vector(
     pivot: tuple[float, float],
     angle: float,
     color: tuple[int, int, int] = RED_PIXEL,
+    length: float | None = None,
 ) -> Image.Image:
     img = (frame.to_jpeg() if isinstance(frame, common.Frame) else frame).convert("RGB")
+    length = length or max(frame.width, frame.height)
 
     cos_a = math.cos(angle)
     sin_a = math.sin(angle)
 
     for offset in range(-LINE_SIDE_THICKNESS, LINE_SIDE_THICKNESS + 1):
-        for t in range(0, max(frame.width, frame.height)):
+        for t in range(0, int(length)):
             x = int(pivot[0] + t * cos_a + offset * (-sin_a))
             y = int(pivot[1] + t * sin_a + offset * cos_a)
             if 0 <= x < frame.width and 0 <= y <= frame.height:
@@ -131,8 +134,12 @@ def draw_calibration_data(
 ) -> Image.Image:
     img = (frame.to_jpeg() if isinstance(frame, common.Frame) else frame).convert("RGB")
 
-    img = draw_vector(img, (data.pivot_x, data.pivot_y), data.angle_min, BLUE_PIXEL)
-    img = draw_vector(img, (data.pivot_x, data.pivot_y), data.angle_max, RED_PIXEL)
+    img = draw_vector(
+        img, (data.pivot_x, data.pivot_y), data.angle_min, BLUE_PIXEL, data.length
+    )
+    img = draw_vector(
+        img, (data.pivot_x, data.pivot_y), data.angle_max, RED_PIXEL, data.length
+    )
 
     return draw_point(img, data.pivot_x, data.pivot_y, GREEN_PIXEL)
 

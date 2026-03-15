@@ -167,6 +167,26 @@ def test_intersect(
 
 
 @pytest.mark.parametrize(
+    ("frame_path", "pivot"),
+    [
+        ("set/1/767591132_largest.json", (152.96891720365855, 98.83491199663723)),
+        ("set/1/12756622577_largest.json", (152.96891720365855, 98.83491199663723)),
+    ],
+)
+def test_arrow_length(
+    frame_path: str,
+    pivot: tuple[float, float],
+    fixtures: utils.Fixtures,
+    snap_json: SnapshotAssertion,
+) -> None:
+    frame = fixtures.load_frame(frame_path)
+
+    got = calibration.arrow_length(frame, pivot[0], pivot[1])
+
+    assert got == snap_json
+
+
+@pytest.mark.parametrize(
     ("line1_path", "line2_path"),
     [
         (

@@ -189,6 +189,20 @@ def intersect(line1: common.Line, line2: common.Line) -> tuple[float, float] | N
     return line1.mx + t * line1.vx, line1.my + t * line1.vy
 
 
+def arrow_length(frame: common.Frame, pivot_x: float, pivot_y: float) -> float:
+    max_dist = 0.0
+    for y in range(frame.height):
+        for x in range(frame.width):
+            _, value = frame.pixel(x, y)
+            if value == BINARIZE_UP:
+                dx = x - pivot_x
+                dy = y - pivot_y
+                dist = math.sqrt(dx * dx + dy * dy)
+                if dist > max_dist:
+                    max_dist = dist
+    return max_dist
+
+
 @dataclass
 class CalibrationData:
     pivot_x: float
@@ -196,16 +210,19 @@ class CalibrationData:
     angle_min: float
     angle_max: float
     direction: int
+    length: float
 
 
-def _frame_line(frame: common.Frame, bg: common.Frame) -> common.Line | None:
+def _frame_line(
+    frame: common.Frame, bg: common.Frame
+) -> tuple[common.Frame, common.Line] | None:
     got_ = subtract_background(frame, bg)
     got_ = binarize(got_)
     got = extract_largest_blob(got_)
     if got is None:
         return None
 
-    return blob_to_line(got)
+    return got, blob_to_line(got)
 
 
 def _frame_angle(
@@ -224,13 +241,15 @@ def _frame_angle(
 def calculate(frames: list[common.Frame]) -> CalibrationData | None:
     bg = calculate_background(frames)
 
-    min_line = _frame_line(frames[0], bg)
-    if min_line is None:
+    min_got = _frame_line(frames[0], bg)
+    if min_got is None:
         return None
+    min_blob, min_line = min_got
 
-    max_line = _frame_line(frames[-1], bg)
-    if max_line is None:
+    max_got = _frame_line(frames[-1], bg)
+    if max_got is None:
         return None
+    max_blob, max_line = max_got
 
     pivot = intersect(min_line, max_line)
     if pivot is None:
@@ -250,8 +269,14 @@ def calculate(frames: list[common.Frame]) -> CalibrationData | None:
     else:
         return None
 
+    length = max(arrow_length(min_blob, *pivot), arrow_length(max_blob, *pivot))
+
     max_angle = math.atan2(max_line.my - pivot[1], max_line.mx - pivot[0])
 
     return CalibrationData(
-        *pivot, angle_min=min_angle, angle_max=max_angle, direction=direction
+        *pivot,
+        angle_min=min_angle,
+        angle_max=max_angle,
+        direction=direction,
+        length=length,
     )

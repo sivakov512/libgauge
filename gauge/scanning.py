@@ -25,7 +25,6 @@ def scan_angle(frame: common.Frame, ca_data: calibration.CalibrationData) -> flo
         ca_data.angle_max - ca_data.angle_min, ca_data.direction
     )
 
-    r_max = int(math.sqrt(frame.width**2 + frame.height**2) / 16)
     angle_step = RADIAL_SCAN_STEP * ca_data.direction
 
     best_angle = ca_data.angle_min
@@ -38,7 +37,7 @@ def scan_angle(frame: common.Frame, ca_data: calibration.CalibrationData) -> flo
         cos_a = math.cos(angle)
         sin_a = math.sin(angle)
 
-        for r in range(r_max):
+        for r in range(int(ca_data.length)):
             x = int(ca_data.pivot_x + r * cos_a)
             y = int(ca_data.pivot_y + r * sin_a)
             if 0 <= x < frame.width and 0 <= y < frame.height:
