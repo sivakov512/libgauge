@@ -51,6 +51,16 @@ class Fixtures:
         data = self.read_json(path, dict[str, float])
         return common.Line(mx=data["mx"], my=data["my"], vx=data["vx"], vy=data["vy"])
 
+    def load_ca_data(self, path: str) -> calibration.CalibrationData:
+        data = self.read_json(path, dict[str, int | float])
+        return calibration.CalibrationData(
+            pivot_x=typing.cast(float, data["pivot_x"]),
+            pivot_y=typing.cast(float, data["pivot_y"]),
+            angle_min=typing.cast(float, data["angle_min"]),
+            angle_max=typing.cast(float, data["angle_max"]),
+            direction=typing.cast(int, data["direction"]),
+        )
+
 
 def unbinarize(frame: common.Frame) -> common.Frame:
     return common.Frame(

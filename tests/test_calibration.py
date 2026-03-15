@@ -198,7 +198,6 @@ def test_intersect_doesnt_depend_on_order(
         ],
     ],
 )
-@pytest.mark.wip
 def test_calculate(
     source_images_dir: str,
     source_images_path: tuple[str, ...],
