@@ -1,19 +1,19 @@
-.PHONY: install lint format test check
+.PHONY: reference-install reference-lint reference-format reference-test reference-check
 
-install:
-	uv sync
+reference-install:
+	cd reference && uv sync
 
-lint:
-	uv run ruff check .
-	uv run ruff format --check .
-	uv run basedpyright
-	uv run mypy gauge tests
+reference-lint:
+	cd reference && uv run ruff check .
+	cd reference && uv run ruff format --check .
+	cd reference && uv run basedpyright
+	cd reference && uv run mypy gauge tests
 
-format:
-	uv run ruff check --fix .
-	uv run ruff format .
+reference-format:
+	cd reference && uv run ruff check --fix .
+	cd reference && uv run ruff format .
 
-test:
-	uv run pytest
+reference-test:
+	cd reference && uv run pytest
 
-check: lint test
+reference-check: reference-lint reference-test

@@ -1,4 +1,4 @@
-name: Lint and Test
+name: Reference
 
 on:
   push:
@@ -16,8 +16,8 @@ jobs:
         with:
           enable-cache: true
 
-      - run: uv sync
+      - run: make reference-install
 
-      - run: make lint
+      - run: make reference-lint
 
-      - run: make test
+      - run: make reference-test
