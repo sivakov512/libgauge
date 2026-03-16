@@ -1,0 +1,145 @@
+# Embedded-friendly clang-tidy: C (snake_case, *_t), C++ (CamelCase types, snake_case methods/members with _),
+# enum values UPPER_CASE, class constants kCamelCase. All warnings -> errors.
+
+Checks: |
+  -*,
+  clang-diagnostic-*,
+  -clang-diagnostic-unused-command-line-argument,
+  clang-analyzer-*,
+  -clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling,
+  bugprone-*,
+  -bugprone-branch-clone,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-macro-parentheses,
+  performance-*,
+  portability-*,
+  modernize-*,
+  -modernize-macro-to-enum,
+  -modernize-use-trailing-return-type,
+  readability-*,
+  misc-*,
+  -misc-include-cleaner,
+  -misc-header-include-cycle,
+  readability-identifier-naming,
+  google-explicit-constructor,
+  google-readability-braces-around-statements,
+  google-runtime-int
+
+
+WarningsAsErrors: "*"
+SystemHeaders: false
+
+CheckOptions:
+  # ===== Naming =====
+  - key: readability-identifier-naming.NamespaceCase
+    value: lower_case
+
+  # C++ classes / interfaces
+  - key: readability-identifier-naming.ClassCase
+    value: CamelCase
+
+  # Class constants (static constexpr)
+  - key: readability-identifier-naming.ClassConstantCase
+    value: CamelCase
+  - key: readability-identifier-naming.ClassConstantPrefix
+    value: "k"
+
+  # Members (C++ classes)
+  - key: readability-identifier-naming.ClassMemberCase
+    value: lower_case
+  - key: readability-identifier-naming.ClassMemberSuffix
+    value: "_"
+  - key: readability-identifier-naming.MemberCase@C++
+    value: lower_case
+  - key: readability-identifier-naming.MemberSuffix@C++
+    value: "_"
+  - key: readability-identifier-naming.PrivateMemberCase
+    value: lower_case
+  - key: readability-identifier-naming.PrivateMemberSuffix
+    value: "_"
+
+  # Methods (C++)
+  - key: readability-identifier-naming.MethodCase
+    value: lower_case
+  - key: readability-identifier-naming.PrivateMethodCase
+    value: lower_case
+
+  # Free/namespace functions (C/C++)
+  - key: readability-identifier-naming.FunctionCase
+    value: lower_case
+  - key: readability-identifier-naming.FunctionIgnoredRegexp
+    value: '^(setUp|tearDown)$'
+
+  # Parameters / locals
+  - key: readability-identifier-naming.ParameterCase
+    value: lower_case
+  - key: readability-identifier-naming.LocalVariableCase
+    value: lower_case
+
+  # Globals (discouraged, but if present)
+  - key: readability-identifier-naming.GlobalVariableCase
+    value: lower_case
+  - key: readability-identifier-naming.GlobalVariablePrefix
+    value: "g_"
+  - key: readability-identifier-naming.GlobalVariableIgnoredRegexp
+    value: "TAG|IRAM_ATTR"
+
+  # structs / typedefs
+  - key: readability-identifier-naming.StructCase@C
+    value: lower_case
+  - key: readability-identifier-naming.StructSuffix@C
+    value: "_t"
+  - key: readability-identifier-naming.StructCase@C++
+    value: CamelCase
+  - key: readability-identifier-naming.TypedefCase
+    value: lower_case
+  - key: readability-identifier-naming.TypedefSuffix
+    value: "_t"
+  - key: readability-identifier-naming.MemberCase@C
+    value: lower_case
+
+  # C++ type aliases (using)
+  - key: readability-identifier-naming.TypeAliasCase
+    value: lower_case
+  - key: readability-identifier-naming.TypeAliasSuffix
+    value: "_t"
+
+  # Enums
+  - key: readability-identifier-naming.EnumCase
+    value: CamelCase
+  - key: readability-identifier-naming.EnumConstantCase
+    value: UPPER_CASE
+
+  # Constants outside classes (C/C++)
+  - key: readability-identifier-naming.ConstantCase
+    value: UPPER_CASE
+
+  # Macros
+  - key: readability-identifier-naming.MacroDefinitionCase
+    value: UPPER_CASE
+
+  # ===== Google tweaks =====
+  - key: google-readability-braces-around-statements.ShortStatementLines
+    value: "1"
+  - key: google-runtime-int.IncludeStyle
+    value: "uint16"
+  - key: google-explicit-constructor.StrictMode
+    value: "false"
+
+  # ===== Modernize / Perf =====
+  - key: modernize-use-override.IgnoreDestructors
+    value: "true"
+  - key: modernize-use-nullptr.NullMacros
+    value: "NULL"
+  - key: performance-for-range-copy.AllowedTypes
+    value: "std::initializer_list"
+
+  # ===== Readability / Misc =====
+  - key: readability-function-cognitive-complexity.IgnoreMacros
+    value: "true"
+  - key: performance-unnecessary-value-param.AllowedTypes
+    value: "std::unique_ptr"
+  - key: readability-identifier-length.IgnoredVariableNames
+    value: "ms|ns|io|tx|rx|id|cb|fd|fb|fn|rc"
+  - key: readability-identifier-length.IgnoredParameterNames
+    value: "ms|ns|io|tx|rx|id|cb|fd|fb|fn|rc"
