@@ -21,7 +21,9 @@ gauge_err_t gauge_cv_blob_to_line(const gauge_frame_t *frame,
 
 gauge_err_t gauge_cv_intersect_lines(const gauge_line_t *line1,
                                      const gauge_line_t *line2,
-                                     gauge_point_t *intersection_out);
+                                     gauge_pointf_t *intersection_out);
+
+float gauge_cv_arrow_length(const gauge_frame_t *frame, const gauge_pointf_t *pivot);
 
 #ifdef __cplusplus
 }

@@ -11,6 +11,7 @@
 
 #define EXAMPLE_NAME_LEN ((size_t) 128)
 static const float POINT_EPSILON = 0.5F;
+static const float ORDER_EPSILON = 1e-5F;
 
 void setUp(void) {}
 
@@ -18,12 +19,12 @@ void tearDown(void) {}
 
 static void save_example_on_source(const char *name, const char *suffix,
                                    const char *source_image_path,
-                                   const gauge_point_t *point) {
+                                   const gauge_pointf_t *point) {
     tu_image_t img;
     if (!TU_FIXTURES_LOAD_IMAGE(source_image_path, &img)) {
         return;
     }
-    tu_draw_point(&img, (float) point->x, (float) point->y, TU_RED);
+    tu_draw_point(&img, point->x, point->y, TU_RED);
 
     char example_name[EXAMPLE_NAME_LEN];
     (void) snprintf(example_name, sizeof(example_name), "%s_%s", name, suffix);
@@ -38,15 +39,15 @@ static void test_intersect_lines(const char *line1_path, const char *line2_path,
     TEST_ASSERT_TRUE(TU_FIXTURES_LOAD_LINE(line1_path, &line1));
     TEST_ASSERT_TRUE(TU_FIXTURES_LOAD_LINE(line2_path, &line2));
 
-    gauge_point_t point;
+    gauge_pointf_t point;
     TEST_ASSERT_EQUAL(GAUGE_OK, gauge_cv_intersect_lines(&line1, &line2, &point));
 
     char snap_x[EXAMPLE_NAME_LEN];
     char snap_y[EXAMPLE_NAME_LEN];
     (void) snprintf(snap_x, sizeof(snap_x), "%s_x", name);
     (void) snprintf(snap_y, sizeof(snap_y), "%s_y", name);
-    TU_SNAPSHOT_ASSERT_FLOAT(snap_x, (float) point.x, POINT_EPSILON);
-    TU_SNAPSHOT_ASSERT_FLOAT(snap_y, (float) point.y, POINT_EPSILON);
+    TU_SNAPSHOT_ASSERT_FLOAT(snap_x, point.x, POINT_EPSILON);
+    TU_SNAPSHOT_ASSERT_FLOAT(snap_y, point.y, POINT_EPSILON);
 
     save_example_on_source(name, "on_0", src1_path, &point);
     save_example_on_source(name, "on_1", src2_path, &point);
@@ -59,13 +60,13 @@ static void test_intersect_lines__order_independent(const char *line1_path,
     TEST_ASSERT_TRUE(TU_FIXTURES_LOAD_LINE(line1_path, &line1));
     TEST_ASSERT_TRUE(TU_FIXTURES_LOAD_LINE(line2_path, &line2));
 
-    gauge_point_t forward;
-    gauge_point_t reversed;
+    gauge_pointf_t forward;
+    gauge_pointf_t reversed;
     TEST_ASSERT_EQUAL(GAUGE_OK, gauge_cv_intersect_lines(&line1, &line2, &forward));
     TEST_ASSERT_EQUAL(GAUGE_OK, gauge_cv_intersect_lines(&line2, &line1, &reversed));
 
-    TEST_ASSERT_EQUAL_size_t(forward.x, reversed.x);
-    TEST_ASSERT_EQUAL_size_t(forward.y, reversed.y);
+    TEST_ASSERT_FLOAT_WITHIN(ORDER_EPSILON, forward.x, reversed.x);
+    TEST_ASSERT_FLOAT_WITHIN(ORDER_EPSILON, forward.y, reversed.y);
 }
 
 /* clang-format off */

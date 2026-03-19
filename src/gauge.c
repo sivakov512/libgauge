@@ -211,7 +211,7 @@ gauge_err_t gauge_cv_blob_to_line(const gauge_frame_t *frame,
 
 gauge_err_t gauge_cv_intersect_lines(const gauge_line_t *line1,
                                      const gauge_line_t *line2,
-                                     gauge_point_t *intersection_out) {
+                                     gauge_pointf_t *intersection_out) {
     float delta_x = line2->origin.x - line1->origin.x;
     float delta_y = line2->origin.y - line1->origin.y;
 
@@ -224,9 +224,27 @@ gauge_err_t gauge_cv_intersect_lines(const gauge_line_t *line1,
 
     float param =
         ((delta_x * line2->direction.y) - (delta_y * line2->direction.x)) / cross;
-    intersection_out->x =
-        (size_t) roundf(line1->origin.x + (param * line1->direction.x));
-    intersection_out->y =
-        (size_t) roundf(line1->origin.y + (param * line1->direction.y));
+    intersection_out->x = line1->origin.x + (param * line1->direction.x);
+    intersection_out->y = line1->origin.y + (param * line1->direction.y);
     return GAUGE_OK;
+}
+
+float gauge_cv_arrow_length(const gauge_frame_t *frame,
+                            const gauge_pointf_t *pivot) {
+    float max_dist = 0;
+    for (size_t pos_y = 0; pos_y < frame->height; ++pos_y) {
+        for (size_t pos_x = 0; pos_x < frame->width; ++pos_x) {
+            size_t index = gauge_frame_pixel_index(frame, pos_x, pos_y);
+
+            if (frame->buf[index] == BINARIZE_UP) {
+                float delta_x = (float) pos_x - pivot->x;
+                float delta_y = (float) pos_y - pivot->y;
+                float dist = sqrtf((delta_x * delta_x) + (delta_y * delta_y));
+                if (dist > max_dist) {
+                    max_dist = dist;
+                }
+            }
+        }
+    }
+    return max_dist;
 }
