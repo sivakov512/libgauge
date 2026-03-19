@@ -27,7 +27,8 @@ add_subdirectory(
     ${CMAKE_CURRENT_LIST_DIR}/../ ${CMAKE_BINARY_DIR}/${LIBNAME})
 
 # Test utilities
-add_subdirectory(utils)
+add_subdirectory(tu)
+add_subdirectory(test_tu)
 
 # Tests
 add_executable(test_gauge test_gauge.c)
@@ -36,7 +37,12 @@ foreach(TESTNAME IN ITEMS test_gauge)
     target_link_libraries(${TESTNAME} PRIVATE
         ${LIBNAME}
         unity
-        test_utils)
+        tu)
+
+    target_compile_definitions(${TESTNAME} PRIVATE
+        TEST_FIXTURES_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures"
+        TEST_SNAPSHOTS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/snapshots/${TESTNAME}"
+        TEST_EXAMPLES_DIR="${CMAKE_CURRENT_SOURCE_DIR}/examples/${TESTNAME}")
 
     set_target_properties(${TESTNAME} PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin

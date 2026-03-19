@@ -27,6 +27,15 @@
     "tags": ["test"],
   },
   {
+    "label": "test-update-snapshots",
+    "command": "make test-update-snapshots",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "no_focus",
+    "hide": "on_success",
+    "tags": ["test", "test-update-snapshots"],
+  },
+  {
     "label": "lint",
     "command": "make lint",
     "use_new_terminal": false,

@@ -1,4 +1,4 @@
-.PHONY: build clean test lint check-format fullcheck
+.PHONY: build clean test test-update-snapshots lint check-format fullcheck
 
 CLANG_TIDY ?= clang-tidy
 CLANG_TIDY_EXTRAS :=
@@ -30,11 +30,14 @@ clean:
 	rm -rf ${__TESTS_BUILD_DIR}
 
 test: build
-	ctest --test-dir ${__TESTS_BUILD_DIR} --output-on-failure -V
+	ctest --test-dir ${__TESTS_BUILD_DIR} --output-on-failure -V $(ARGS)
+
+test-update-snapshots: build
+	UPDATE_SNAPSHOTS=1 ctest --test-dir ${__TESTS_BUILD_DIR} --output-on-failure -V $(ARGS)
 
 lint: build
 	find . \
-    	\( -type d \( -name build -o -name ".cache" -o -name ".git" -o -name "reference" \) -prune \) \
+    	\( -type d \( -name build -o -name ".cache" -o -name ".git" -o -name "reference" -o -name "3rdparty" \) -prune \) \
     	-o \
     	-type f \( -name "*.c" -o -name "*.cpp" \) \
         -print0 \
@@ -42,7 +45,7 @@ lint: build
 
 formatting:
 	find . \
-		\( -type d \( -name build -o -name ".cache" -o -name ".git" -o -name "reference" \) -prune \) \
+		\( -type d \( -name build -o -name ".cache" -o -name ".git" -o -name "reference" -o -name "3rdparty" \) -prune \) \
 		-o \
     	-type f \( -name "*.c" -o -name "*.h" -o -name "*.cpp" -o -name "*.hpp" \) \
         -print0 \
