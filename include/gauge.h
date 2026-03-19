@@ -26,6 +26,11 @@ typedef struct {
 } gauge_point_t;
 
 typedef struct {
+    gauge_point_t origin;
+    gauge_point_t direction;
+} gauge_line_t;
+
+typedef struct {
     gauge_point_t pivot;
     float angle_start_rad;
     float angle_end_rad;

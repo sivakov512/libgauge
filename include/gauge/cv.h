@@ -1,10 +1,14 @@
 #pragma once
 
+#include "gauge.h"
+#include <string.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define GAUGE_CV_EXAMPLE 3
+void gauge_cv__calculate_background(gauge_frame_t *frames, size_t frames_len,
+                                    gauge_frame_t *bg_out);
 
 #ifdef __cplusplus
 }
