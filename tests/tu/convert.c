@@ -1,9 +1,12 @@
 #include "tu/convert.h"
 
-#define GRAY_R 77U
-#define GRAY_G 150U
-#define GRAY_B 29U
-#define GRAY_SHIFT 8U
+/* Exact PIL BT.601 coefficients with rounding: (19595*R + 38470*G + 7471*B + 32768)
+ * >> 16 */
+#define GRAY_R 19595U
+#define GRAY_G 38470U
+#define GRAY_B 7471U
+#define GRAY_ROUND 32768U
+#define GRAY_SHIFT 16U
 #define RGB_CHANNELS 3U
 #define BINARIZE_UP 255U
 
@@ -16,9 +19,9 @@ void tu_to_frames(tu_image_t *imgs, gauge_frame_t *out, size_t count) {
             uint8_t red = img->buf[(i * RGB_CHANNELS) + 0];
             uint8_t green = img->buf[(i * RGB_CHANNELS) + 1];
             uint8_t blue = img->buf[(i * RGB_CHANNELS) + 2];
-            img->buf[i] =
-                (uint8_t) (((GRAY_R * red) + (GRAY_G * green) + (GRAY_B * blue)) >>
-                           GRAY_SHIFT);
+            img->buf[i] = (uint8_t) ((GRAY_R * red + GRAY_G * green + GRAY_B * blue +
+                                      GRAY_ROUND) >>
+                                     GRAY_SHIFT);
         }
 
         img->channels = 1;

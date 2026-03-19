@@ -10,8 +10,8 @@
 
 #define TU_MAX_FILES 128
 #define TU_DIR_MODE 0755
-#define TU_IMAGE_WIDTH_MAX 320
-#define TU_IMAGE_HEIGHT_MAX 240
+#define TU_IMAGE_WIDTH_MAX 320UL
+#define TU_IMAGE_HEIGHT_MAX 240UL
 #define TU_FRAME_BUF_LEN (TU_IMAGE_WIDTH_MAX * TU_IMAGE_HEIGHT_MAX)
 
 void tu_ensure_parent_dir(const char *path);
