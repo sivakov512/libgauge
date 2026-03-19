@@ -143,8 +143,8 @@ bool tu_json_read_line(const char *path, gauge_line_t *out) {
 
     out->origin.x = (size_t) jox->valueint;
     out->origin.y = (size_t) joy->valueint;
-    out->direction.x = (size_t) jdx->valueint;
-    out->direction.y = (size_t) jdy->valueint;
+    out->direction.x = (float) jdx->valuedouble;
+    out->direction.y = (float) jdy->valuedouble;
 
     cJSON_Delete(root);
     return true;

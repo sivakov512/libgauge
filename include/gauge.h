@@ -28,8 +28,13 @@ typedef struct {
 } gauge_point_t;
 
 typedef struct {
+    float x;
+    float y;
+} gauge_pointf_t;
+
+typedef struct {
     gauge_point_t origin;
-    gauge_point_t direction;
+    gauge_pointf_t direction;
 } gauge_line_t;
 
 typedef struct {

@@ -16,6 +16,9 @@ void gauge_cv_binarize(gauge_frame_t *frame, uint8_t threshold);
 
 gauge_err_t gauge_extract_largest_blob(gauge_frame_t *frame);
 
+gauge_err_t gauge_cv_blob_to_line(const gauge_frame_t *frame,
+                                  gauge_line_t *line_out);
+
 #ifdef __cplusplus
 }
 #endif

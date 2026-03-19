@@ -3,6 +3,7 @@ set(TEST_CV_TESTS
     test_subtract_background
     test_binarize
     test_extract_largest_blob
+    test_blob_to_line
 )
 
 foreach(TESTNAME IN LISTS TEST_CV_TESTS)

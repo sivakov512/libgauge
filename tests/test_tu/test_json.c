@@ -17,8 +17,8 @@ static const float FLOAT_EPSILON = 0.0001F;
 
 static const size_t LINE_ORIGIN_X = 10;
 static const size_t LINE_ORIGIN_Y = 20;
-static const size_t LINE_DIRECTION_X = 30;
-static const size_t LINE_DIRECTION_Y = 40;
+static const float LINE_DIRECTION_X = 30.0F;
+static const float LINE_DIRECTION_Y = 40.0F;
 
 static const size_t CA_PIVOT_X = 100;
 static const size_t CA_PIVOT_Y = 200;

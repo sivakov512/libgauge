@@ -1,4 +1,5 @@
 #include "gauge.h"
+#include <math.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -11,6 +12,8 @@
 static const size_t NEIGHBORHOOD[NEIGHBORHOOD_SIZE][2] = {
     {-1, 0}, {1, 0}, {0, -1}, {0, 1}, {-1, -1}, {1, -1}, {-1, 1}, {1, 1},
 };
+
+#define KINDA_ZERO 1e-6
 
 void gauge_cv_calculate_background(const gauge_frame_t *frames, size_t frames_len,
                                    gauge_frame_t *bg_out) {
@@ -111,4 +114,96 @@ gauge_err_t gauge_extract_largest_blob(gauge_frame_t *frame) {
 ret:
     free(stack);
     return err;
+}
+
+static gauge_err_t center_of_mass(const gauge_frame_t *frame,
+                                  gauge_point_t *point_out) {
+    *point_out = (gauge_point_t) {0, 0};
+    size_t count = 0;
+
+    for (size_t pos_y = 0; pos_y < frame->height; ++pos_y) {
+        for (size_t pos_x = 0; pos_x < frame->width; ++pos_x) {
+            size_t index = gauge_frame_pixel_index(frame, pos_x, pos_y);
+
+            if (frame->buf[index] == BINARIZE_UP) {
+                point_out->x += pos_x;
+                point_out->y += pos_y;
+                ++count;
+            }
+        }
+    }
+
+    if (count == 0) {
+        return GAUGE_ERR_BLOB_NOT_FOUND;
+    }
+
+    point_out->x /= count;
+    point_out->y /= count;
+    return GAUGE_OK;
+}
+
+static void principal_axis(const gauge_frame_t *frame, const gauge_point_t *mpoint,
+                           gauge_pointf_t *vector_out) {
+    float cxx = 0;
+    float cxy = 0;
+    float cyy = 0;
+    size_t count = 0;
+
+    // Covariance matrix
+    for (size_t pos_y = 0; pos_y < frame->height; ++pos_y) {
+        for (size_t pos_x = 0; pos_x < frame->width; ++pos_x) {
+            if (frame->buf[gauge_frame_pixel_index(frame, pos_x, pos_y)] ==
+                BINARIZE_UP) {
+                float delta_x = (float) pos_x - (float) mpoint->x;
+                float delta_y = (float) pos_y - (float) mpoint->y;
+                cxx += delta_x * delta_x;
+                cxy += delta_x * delta_y;
+                cyy += delta_y * delta_y;
+                ++count;
+            }
+        }
+    }
+
+    cxx /= (float) count;
+    cxy /= (float) count;
+    cyy /= (float) count;
+
+    // lambda1
+    float trace = cxx + cyy;
+    float det = (cxx * cyy) - (cxy * cxy);
+    float D = // NOLINT(readability-identifier-naming,readability-identifier-length)
+        (trace * trace) - (4 * det);
+    float sqrt_D = sqrtf(fmaxf(0, D));       // NOLINT(readability-identifier-naming)
+    float lambda1 = (trace + sqrt_D) / 2.0F; // NOLINT(readability-magic-numbers)
+
+    // lambda1 vector
+    if (fabsf(cxy) > KINDA_ZERO) {
+        vector_out->x = cxy;
+        vector_out->y = lambda1 - cxx;
+    } else {
+        if (cxx > cyy) {
+            vector_out->x = 1.0F;
+            vector_out->y = 0.0F;
+        } else {
+            vector_out->x = 0.0F;
+            vector_out->y = 1.0F;
+        }
+    }
+
+    // Normalize vector length
+    float len =
+        sqrtf((vector_out->x * vector_out->x) + (vector_out->y * vector_out->y));
+    vector_out->x /= len;
+    vector_out->y /= len;
+}
+
+gauge_err_t gauge_cv_blob_to_line(const gauge_frame_t *frame,
+                                  gauge_line_t *line_out) {
+    gauge_err_t err = center_of_mass(frame, &line_out->origin);
+    if (err != GAUGE_OK) {
+        return err;
+    }
+
+    principal_axis(frame, &line_out->origin, &line_out->direction);
+    return GAUGE_OK;
 }
