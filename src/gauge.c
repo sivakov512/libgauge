@@ -44,21 +44,14 @@ static size_t flood_fill(gauge_frame_t *frame, size_t index, uint8_t label,
                          size_t *stack) {
     size_t *stack_top = stack;
 
+    frame->buf[index] = label;
     *stack_top++ = index;
-    size_t size = 0;
+    size_t size = 1;
 
     while (stack_top != stack) {
-        size_t index = *--stack_top;
-
-        if (frame->buf[index] != BINARIZE_UP) {
-            continue;
-        }
-
-        frame->buf[index] = label;
-        ++size;
-
-        size_t cur_x = index % frame->width;
-        size_t cur_y = index / frame->width;
+        size_t idx = *--stack_top;
+        size_t cur_x = idx % frame->width;
+        size_t cur_y = idx / frame->width;
 
         for (uint8_t i = 0; i < NEIGHBORHOOD_SIZE; ++i) {
             size_t nx = cur_x + NEIGHBORHOOD[i][0]; // NOLINT
@@ -67,7 +60,9 @@ static size_t flood_fill(gauge_frame_t *frame, size_t index, uint8_t label,
             if ((0 <= nx && nx < frame->width) && (0 <= ny && ny < frame->height)) {
                 size_t ni = gauge_frame_pixel_index(frame, nx, ny); // NOLINT
                 if (frame->buf[ni] == BINARIZE_UP) {
+                    frame->buf[ni] = label;
                     *stack_top++ = ni;
+                    ++size;
                 }
             }
         }
