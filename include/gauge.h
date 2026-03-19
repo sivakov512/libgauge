@@ -33,7 +33,7 @@ typedef struct {
 } gauge_pointf_t;
 
 typedef struct {
-    gauge_point_t origin;
+    gauge_pointf_t origin;
     gauge_pointf_t direction;
 } gauge_line_t;
 

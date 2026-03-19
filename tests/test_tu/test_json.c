@@ -15,10 +15,11 @@ static const uint8_t FRAME_BUF[] = {10, 20, 30, 40, 50, 60};
 static const float FLOAT_VALUE = 3.14F;
 static const float FLOAT_EPSILON = 0.0001F;
 
-static const size_t LINE_ORIGIN_X = 10;
-static const size_t LINE_ORIGIN_Y = 20;
+static const float LINE_ORIGIN_X = 10.5F;
+static const float LINE_ORIGIN_Y = 20.5F;
 static const float LINE_DIRECTION_X = 30.0F;
 static const float LINE_DIRECTION_Y = 40.0F;
+static const float LINE_FLOAT_EPSILON = 1e-5F;
 
 static const size_t CA_PIVOT_X = 100;
 static const size_t CA_PIVOT_Y = 200;
@@ -58,10 +59,10 @@ static void test_line_roundtrip(void) {
     gauge_line_t dst;
     TEST_ASSERT_TRUE(tu_json_read_line(path, &dst));
 
-    TEST_ASSERT_EQUAL(src.origin.x, dst.origin.x);
-    TEST_ASSERT_EQUAL(src.origin.y, dst.origin.y);
-    TEST_ASSERT_EQUAL(src.direction.x, dst.direction.x);
-    TEST_ASSERT_EQUAL(src.direction.y, dst.direction.y);
+    TEST_ASSERT_FLOAT_WITHIN(LINE_FLOAT_EPSILON, src.origin.x, dst.origin.x);
+    TEST_ASSERT_FLOAT_WITHIN(LINE_FLOAT_EPSILON, src.origin.y, dst.origin.y);
+    TEST_ASSERT_FLOAT_WITHIN(LINE_FLOAT_EPSILON, src.direction.x, dst.direction.x);
+    TEST_ASSERT_FLOAT_WITHIN(LINE_FLOAT_EPSILON, src.direction.y, dst.direction.y);
 }
 
 static void test_calibration_roundtrip(void) {

@@ -73,10 +73,10 @@ void tu_snapshot_assert_line(const char *snapshots_dir, const char *name,
 
     gauge_line_t stored;
     TEST_ASSERT_TRUE(tu_json_read_line(path, &stored));
-    TEST_ASSERT_EQUAL_size_t(line->origin.x, stored.origin.x);
-    TEST_ASSERT_EQUAL_size_t(line->origin.y, stored.origin.y);
-    TEST_ASSERT_EQUAL_size_t(line->direction.x, stored.direction.x);
-    TEST_ASSERT_EQUAL_size_t(line->direction.y, stored.direction.y);
+    TEST_ASSERT_FLOAT_WITHIN(ANGLE_EPSILON, stored.origin.x, line->origin.x);
+    TEST_ASSERT_FLOAT_WITHIN(ANGLE_EPSILON, stored.origin.y, line->origin.y);
+    TEST_ASSERT_FLOAT_WITHIN(ANGLE_EPSILON, stored.direction.x, line->direction.x);
+    TEST_ASSERT_FLOAT_WITHIN(ANGLE_EPSILON, stored.direction.y, line->direction.y);
 }
 
 void tu_snapshot_assert_calibration(const char *snapshots_dir, const char *name,

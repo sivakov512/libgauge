@@ -19,6 +19,10 @@ gauge_err_t gauge_extract_largest_blob(gauge_frame_t *frame);
 gauge_err_t gauge_cv_blob_to_line(const gauge_frame_t *frame,
                                   gauge_line_t *line_out);
 
+gauge_err_t gauge_cv_intersect_lines(const gauge_line_t *line1,
+                                     const gauge_line_t *line2,
+                                     gauge_point_t *intersection_out);
+
 #ifdef __cplusplus
 }
 #endif

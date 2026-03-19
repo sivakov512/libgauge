@@ -141,8 +141,8 @@ bool tu_json_read_line(const char *path, gauge_line_t *out) {
         return false;
     }
 
-    out->origin.x = (size_t) jox->valueint;
-    out->origin.y = (size_t) joy->valueint;
+    out->origin.x = (float) jox->valuedouble;
+    out->origin.y = (float) joy->valuedouble;
     out->direction.x = (float) jdx->valuedouble;
     out->direction.y = (float) jdy->valuedouble;
 

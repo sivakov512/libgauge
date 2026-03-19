@@ -4,6 +4,7 @@ set(TEST_CV_TESTS
     test_binarize
     test_extract_largest_blob
     test_blob_to_line
+    test_intersect_lines
 )
 
 foreach(TESTNAME IN LISTS TEST_CV_TESTS)

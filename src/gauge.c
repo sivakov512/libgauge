@@ -117,8 +117,9 @@ ret:
 }
 
 static gauge_err_t center_of_mass(const gauge_frame_t *frame,
-                                  gauge_point_t *point_out) {
-    *point_out = (gauge_point_t) {0, 0};
+                                  gauge_pointf_t *point_out) {
+    float sum_x = 0;
+    float sum_y = 0;
     size_t count = 0;
 
     for (size_t pos_y = 0; pos_y < frame->height; ++pos_y) {
@@ -126,8 +127,8 @@ static gauge_err_t center_of_mass(const gauge_frame_t *frame,
             size_t index = gauge_frame_pixel_index(frame, pos_x, pos_y);
 
             if (frame->buf[index] == BINARIZE_UP) {
-                point_out->x += pos_x;
-                point_out->y += pos_y;
+                sum_x += (float) pos_x;
+                sum_y += (float) pos_y;
                 ++count;
             }
         }
@@ -137,12 +138,12 @@ static gauge_err_t center_of_mass(const gauge_frame_t *frame,
         return GAUGE_ERR_BLOB_NOT_FOUND;
     }
 
-    point_out->x /= count;
-    point_out->y /= count;
+    point_out->x = sum_x / (float) count;
+    point_out->y = sum_y / (float) count;
     return GAUGE_OK;
 }
 
-static void principal_axis(const gauge_frame_t *frame, const gauge_point_t *mpoint,
+static void principal_axis(const gauge_frame_t *frame, const gauge_pointf_t *mpoint,
                            gauge_pointf_t *vector_out) {
     float cxx = 0;
     float cxy = 0;
@@ -205,5 +206,27 @@ gauge_err_t gauge_cv_blob_to_line(const gauge_frame_t *frame,
     }
 
     principal_axis(frame, &line_out->origin, &line_out->direction);
+    return GAUGE_OK;
+}
+
+gauge_err_t gauge_cv_intersect_lines(const gauge_line_t *line1,
+                                     const gauge_line_t *line2,
+                                     gauge_point_t *intersection_out) {
+    float delta_x = line2->origin.x - line1->origin.x;
+    float delta_y = line2->origin.y - line1->origin.y;
+
+    float cross = (line1->direction.x * line2->direction.y) -
+                  (line1->direction.y * line2->direction.x);
+
+    if (fabsf(cross) < KINDA_ZERO) {
+        return GAUGE_ERR_AXES_NOT_INTERSECTING;
+    }
+
+    float param =
+        ((delta_x * line2->direction.y) - (delta_y * line2->direction.x)) / cross;
+    intersection_out->x =
+        (size_t) roundf(line1->origin.x + (param * line1->direction.x));
+    intersection_out->y =
+        (size_t) roundf(line1->origin.y + (param * line1->direction.y));
     return GAUGE_OK;
 }

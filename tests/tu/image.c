@@ -64,8 +64,8 @@ void tu_draw_point(tu_image_t *img, float x_pos, float y_pos, tu_color_t color) 
 }
 
 void tu_draw_line(tu_image_t *img, const gauge_line_t *line, tu_color_t color) {
-    float orig_x = (float) line->origin.x;
-    float orig_y = (float) line->origin.y;
+    float orig_x = line->origin.x;
+    float orig_y = line->origin.y;
     float dir_x = (float) line->direction.x;
     float dir_y = (float) line->direction.y;
     float len = sqrtf((dir_x * dir_x) + (dir_y * dir_y));

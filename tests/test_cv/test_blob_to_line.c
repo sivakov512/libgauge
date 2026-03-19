@@ -18,7 +18,7 @@ void tearDown(void) {}
 
 static void draw_line_with_origin(tu_image_t *img, const gauge_line_t *line) {
     tu_draw_line(img, line, TU_RED);
-    tu_draw_point(img, (float) line->origin.x, (float) line->origin.y, TU_GREEN);
+    tu_draw_point(img, line->origin.x, line->origin.y, TU_GREEN);
 }
 
 static void save_example(const char *name, const char *suffix, tu_image_t *img) {
