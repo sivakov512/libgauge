@@ -14,6 +14,8 @@ void gauge_cv_subtract_background(gauge_frame_t *frame, const gauge_frame_t *bg)
 
 void gauge_cv_binarize(gauge_frame_t *frame, uint8_t threshold);
 
+gauge_err_t gauge_extract_largest_blob(gauge_frame_t *frame);
+
 #ifdef __cplusplus
 }
 #endif

@@ -77,11 +77,9 @@ static void test_binarize(const char *frame_path, const char *name) {
     TU_EXAMPLES_SAVE_FRAME(name, &frame);
 }
 
-/* clang-format off */
-#define BINARIZE_CASES(X) \
-    X(test_binarize__set_1_00767591132,   "set/1/00767591132_subtracted.json") \
+#define BINARIZE_CASES(X)                                                           \
+    X(test_binarize__set_1_00767591132, "set/1/00767591132_subtracted.json")        \
     X(test_binarize__set_1_12756622577, "set/1/12756622577_subtracted.json")
-/* clang-format on */
 
 #define DEF_TEST(name, frame)                                                       \
     static void name(void) {                                                        \
@@ -90,11 +88,88 @@ static void test_binarize(const char *frame_path, const char *name) {
 BINARIZE_CASES(DEF_TEST)
 #undef DEF_TEST
 
-/* clang-format off */
-#define SUBTRACT_BACKGROUND_CASES(X) \
-    X(test_subtract_background__set_1_00767591132,   "set/1/00767591132.jpg",   "set/1/background.json") \
-    X(test_subtract_background__set_1_12756622577, "set/1/12756622577.jpg", "set/1/background.json")
-/* clang-format on */
+static void test_extract_largest_blob(const char *frame_path, const char *name) {
+    static uint8_t frame_buf[TU_FRAME_BUF_LEN];
+    static gauge_frame_t frame;
+    TEST_ASSERT_TRUE(
+        TU_FIXTURES_LOAD_FRAME(frame_path, frame_buf, TU_FRAME_BUF_LEN, &frame));
+
+    TEST_ASSERT_EQUAL(GAUGE_OK, gauge_extract_largest_blob(&frame));
+
+    TU_SNAPSHOT_ASSERT_FRAME(name, &frame);
+
+    tu_unbinarize(&frame);
+    TU_EXAMPLES_SAVE_FRAME(name, &frame);
+}
+
+#define EXTRACT_LARGEST_BLOB_CASES(X)                                               \
+    X(test_extract_largest_blob__set_1_00767591132,                                 \
+      "set/1/00767591132_binarized.json")                                           \
+    X(test_extract_largest_blob__set_1_12756622577,                                 \
+      "set/1/12756622577_binarized.json")
+
+#define DEF_TEST(name, frame)                                                       \
+    static void name(void) {                                                        \
+        test_extract_largest_blob(frame, #name);                                    \
+    }
+EXTRACT_LARGEST_BLOB_CASES(DEF_TEST)
+#undef DEF_TEST
+
+#define SYNTHETIC_FRAME_SIZE ((size_t) 16)
+#define SYNTHETIC_FRAME_BUF_LEN (SYNTHETIC_FRAME_SIZE * SYNTHETIC_FRAME_SIZE)
+
+// Blob spacing of 3 ensures no 8-connected neighbors between blobs.
+// 18x18 grid of blobs in a 54x54 frame = 324 blobs > UINT8_MAX.
+#define TOO_MANY_BLOBS_FRAME_SIZE ((size_t) 54)
+#define TOO_MANY_BLOBS_FRAME_BUF_LEN                                                \
+    (TOO_MANY_BLOBS_FRAME_SIZE * TOO_MANY_BLOBS_FRAME_SIZE)
+#define TOO_MANY_BLOBS_SPACING ((size_t) 3)
+
+static void test_extract_largest_blob__single_blob(void) {
+    static uint8_t buf[SYNTHETIC_FRAME_BUF_LEN];
+    memset(buf, 1, sizeof(buf));
+    gauge_frame_t frame = {.buf = buf,
+                           .buf_len = SYNTHETIC_FRAME_BUF_LEN,
+                           .width = SYNTHETIC_FRAME_SIZE,
+                           .height = SYNTHETIC_FRAME_SIZE};
+    TEST_ASSERT_EQUAL(GAUGE_OK, gauge_extract_largest_blob(&frame));
+    for (size_t ii = 0; ii < frame.buf_len; ++ii) {
+        TEST_ASSERT_EQUAL_UINT8(1, frame.buf[ii]);
+    }
+}
+
+static void test_extract_largest_blob__blob_not_found(void) {
+    static uint8_t buf[SYNTHETIC_FRAME_BUF_LEN];
+    memset(buf, 0, sizeof(buf));
+    gauge_frame_t frame = {.buf = buf,
+                           .buf_len = SYNTHETIC_FRAME_BUF_LEN,
+                           .width = SYNTHETIC_FRAME_SIZE,
+                           .height = SYNTHETIC_FRAME_SIZE};
+    TEST_ASSERT_EQUAL(GAUGE_ERR_BLOB_NOT_FOUND, gauge_extract_largest_blob(&frame));
+}
+
+static void test_extract_largest_blob__too_many_blobs(void) {
+    static uint8_t buf[TOO_MANY_BLOBS_FRAME_BUF_LEN];
+    memset(buf, 0, sizeof(buf));
+    for (size_t row = 0; row < TOO_MANY_BLOBS_FRAME_SIZE;
+         row += TOO_MANY_BLOBS_SPACING) {
+        for (size_t col = 0; col < TOO_MANY_BLOBS_FRAME_SIZE;
+             col += TOO_MANY_BLOBS_SPACING) {
+            buf[(row * TOO_MANY_BLOBS_FRAME_SIZE) + col] = 1;
+        }
+    }
+    gauge_frame_t frame = {.buf = buf,
+                           .buf_len = TOO_MANY_BLOBS_FRAME_BUF_LEN,
+                           .width = TOO_MANY_BLOBS_FRAME_SIZE,
+                           .height = TOO_MANY_BLOBS_FRAME_SIZE};
+    TEST_ASSERT_EQUAL(GAUGE_ERR_TOO_MANY_BLOBS, gauge_extract_largest_blob(&frame));
+}
+
+#define SUBTRACT_BACKGROUND_CASES(X)                                                \
+    X(test_subtract_background__set_1_00767591132, "set/1/00767591132.jpg",         \
+      "set/1/background.json")                                                      \
+    X(test_subtract_background__set_1_12756622577, "set/1/12756622577.jpg",         \
+      "set/1/background.json")
 
 #define DEF_TEST(name, image, bg)                                                   \
     static void name(void) {                                                        \
@@ -117,6 +192,14 @@ int main(void) {
 #define RUN(name, frame) RUN_TEST(name);
     BINARIZE_CASES(RUN)
 #undef RUN
+
+#define RUN(name, frame) RUN_TEST(name);
+    EXTRACT_LARGEST_BLOB_CASES(RUN)
+#undef RUN
+
+    RUN_TEST(test_extract_largest_blob__single_blob);
+    RUN_TEST(test_extract_largest_blob__blob_not_found);
+    RUN_TEST(test_extract_largest_blob__too_many_blobs);
 
     return UNITY_END();
 }

@@ -41,11 +41,18 @@ typedef struct {
 } gauge_calibration_data_t;
 
 typedef enum {
-    GAUGE_ERR_OK = 0,
+    GAUGE_OK = 0,
     GAUGE_ERR_BLOB_NOT_FOUND,
+    GAUGE_ERR_TOO_MANY_BLOBS,
     GAUGE_ERR_AXES_NOT_INTERSECTING,
     GAUGE_ERR_SPIN_UNDETERMINED,
+    GAUGE_ERR_FRAME_SIZE_MISMATCH,
 } gauge_err_t;
+
+static inline size_t gauge_frame_pixel_index(const gauge_frame_t *frame,
+                                             size_t pos_x, size_t pos_y) {
+    return (pos_y * frame->width) + pos_x;
+}
 
 gauge_err_t gauge_calibrate(gauge_frame_t *frames, size_t frames_len,
                             gauge_calibration_data_t *ca_data_out);
