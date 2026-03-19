@@ -12,6 +12,8 @@ typedef int8_t gauge_spin_t;
 #define GAUGE_SPIN_CW ((gauge_spin_t) 1)
 #define GAUGE_SPIN_CCW ((gauge_spin_t) - 1)
 
+#define GAUGE_BINARIZATION_THRESHOLD 20
+
 typedef struct {
     uint8_t *buf;
     size_t buf_len;
