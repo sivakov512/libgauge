@@ -4,10 +4,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-/* Read gauge_frame_t from JSON file. buf must be provided by caller.
- * Returns false on error. */
-bool tu_json_read_frame(const char *path, uint8_t *buf, size_t buf_len,
-                        gauge_frame_t *out);
+/* Read gauge_frame_t from JSON file. out->buf and out->buf_len (capacity) must
+ * be set by the caller before the call. Returns false on error. */
+bool tu_json_read_frame(const char *path, gauge_frame_t *out);
 
 /* Write gauge_frame_t to JSON file.
  * Returns false on error. */
@@ -37,3 +36,19 @@ bool tu_json_read_float(const char *path, float *out);
 /* Write a single float scalar to JSON file.
  * Returns false on error. */
 bool tu_json_write_float(const char *path, float value);
+
+/* Read gauge_pointf_t from JSON file.
+ * Returns false on error. */
+bool tu_json_read_pointf(const char *path, gauge_pointf_t *out);
+
+/* Write gauge_pointf_t to JSON file.
+ * Returns false on error. */
+bool tu_json_write_pointf(const char *path, const gauge_pointf_t *point);
+
+/* Read a single size_t from JSON file.
+ * Returns false on error. */
+bool tu_json_read_size_t(const char *path, size_t *out);
+
+/* Write a single size_t to JSON file.
+ * Returns false on error. */
+bool tu_json_write_size_t(const char *path, size_t value);

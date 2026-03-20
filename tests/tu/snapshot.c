@@ -47,9 +47,9 @@ void tu_snapshot_assert_frame(const char *snapshots_dir, const char *name,
         file_exists(path),
         "Snapshot not found. Run with UPDATE_SNAPSHOTS=1 to create it.");
 
-    gauge_frame_t stored;
-    TEST_ASSERT_TRUE(tu_json_read_frame(path, g_frame_read_buf,
-                                        sizeof(g_frame_read_buf), &stored));
+    gauge_frame_t stored = {.buf = g_frame_read_buf,
+                            .buf_len = sizeof(g_frame_read_buf)};
+    TEST_ASSERT_TRUE(tu_json_read_frame(path, &stored));
     TEST_ASSERT_EQUAL_size_t(frame->width, stored.width);
     TEST_ASSERT_EQUAL_size_t(frame->height, stored.height);
     TEST_ASSERT_EQUAL_size_t(frame->buf_len, stored.buf_len);
@@ -124,4 +124,45 @@ void tu_snapshot_assert_float(const char *snapshots_dir, const char *name,
     float stored;
     TEST_ASSERT_TRUE(tu_json_read_float(path, &stored));
     TEST_ASSERT_FLOAT_WITHIN(epsilon, value, stored);
+}
+
+void tu_snapshot_assert_pointf(const char *snapshots_dir, const char *name,
+                               const gauge_pointf_t *point, float epsilon) {
+    char path[PATH_MAX];
+    build_path(path, sizeof(path), snapshots_dir, name);
+
+    if (should_update()) {
+        tu_ensure_parent_dir(path);
+        TEST_ASSERT_TRUE(tu_json_write_pointf(path, point));
+        return;
+    }
+
+    TEST_ASSERT_TRUE_MESSAGE(
+        file_exists(path),
+        "Snapshot not found. Run with UPDATE_SNAPSHOTS=1 to create it.");
+
+    gauge_pointf_t stored;
+    TEST_ASSERT_TRUE(tu_json_read_pointf(path, &stored));
+    TEST_ASSERT_FLOAT_WITHIN(epsilon, point->x, stored.x);
+    TEST_ASSERT_FLOAT_WITHIN(epsilon, point->y, stored.y);
+}
+
+void tu_snapshot_assert_size_t(const char *snapshots_dir, const char *name,
+                               size_t value) {
+    char path[PATH_MAX];
+    build_path(path, sizeof(path), snapshots_dir, name);
+
+    if (should_update()) {
+        tu_ensure_parent_dir(path);
+        TEST_ASSERT_TRUE(tu_json_write_size_t(path, value));
+        return;
+    }
+
+    TEST_ASSERT_TRUE_MESSAGE(
+        file_exists(path),
+        "Snapshot not found. Run with UPDATE_SNAPSHOTS=1 to create it.");
+
+    size_t stored;
+    TEST_ASSERT_TRUE(tu_json_read_size_t(path, &stored));
+    TEST_ASSERT_EQUAL_size_t(value, stored);
 }

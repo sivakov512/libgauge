@@ -9,6 +9,7 @@
 /* TEST_EXAMPLES_DIR — images for visual inspection */
 
 #define TU_MAX_FILES 128
+#define TU_EXAMPLE_NAME_LEN ((size_t) 128)
 #define TU_DIR_MODE 0755
 #define TU_IMAGE_WIDTH_MAX 320UL
 #define TU_IMAGE_HEIGHT_MAX 240UL

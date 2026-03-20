@@ -24,12 +24,11 @@ static void test_snapshot_frame(void) {
                            .width = FRAME_WIDTH,
                            .height = FRAME_HEIGHT};
 
-    TU_SNAPSHOT_ASSERT_FRAME("test_snapshot_frame_frame", &frame);
+    SNAPSHOT_ASSERT_FRAME("test_snapshot_frame_frame", &frame);
 }
 
 static void test_snapshot_float(void) {
-    TU_SNAPSHOT_ASSERT_FLOAT("test_snapshot_float_float", FLOAT_VALUE,
-                             FLOAT_EPSILON);
+    SNAPSHOT_ASSERT_FLOAT("test_snapshot_float_float", FLOAT_VALUE, FLOAT_EPSILON);
 }
 
 int main(void) {

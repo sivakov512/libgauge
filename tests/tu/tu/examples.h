@@ -11,8 +11,8 @@ void tu_examples_save_image(const char *examples_dir, const char *name,
 void tu_examples_save_frame(const char *examples_dir, const char *name,
                             const gauge_frame_t *frame);
 
-#define TU_EXAMPLES_SAVE_IMAGE(name, img)                                           \
+#define EXAMPLES_SAVE_IMAGE(name, img)                                              \
     tu_examples_save_image(TEST_EXAMPLES_DIR, (name), (img))
 
-#define TU_EXAMPLES_SAVE_FRAME(name, frame)                                         \
+#define EXAMPLES_SAVE_FRAME(name, frame)                                            \
     tu_examples_save_frame(TEST_EXAMPLES_DIR, (name), (frame))

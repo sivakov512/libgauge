@@ -73,10 +73,10 @@ size_t tu_fixtures_load_images(const char *fixtures_dir, const char *rel_dir,
 }
 
 bool tu_fixtures_load_frame(const char *fixtures_dir, const char *rel_path,
-                            uint8_t *buf, size_t buf_len, gauge_frame_t *out) {
+                            gauge_frame_t *out) {
     char path[PATH_MAX];
     snprintf(path, sizeof(path), "%s/%s", fixtures_dir, rel_path);
-    return tu_json_read_frame(path, buf, buf_len, out);
+    return tu_json_read_frame(path, out);
 }
 
 bool tu_fixtures_load_line(const char *fixtures_dir, const char *rel_path,

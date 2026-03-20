@@ -12,7 +12,7 @@ static const size_t SAMPLE_HEIGHT = 240;
 
 static void test_to_frame(void) {
     tu_image_t img;
-    TEST_ASSERT_TRUE(TU_FIXTURES_LOAD_IMAGE("common/sample_1.jpg", &img));
+    FIXTURES_LOAD_IMAGE("common/sample_1.jpg", &img);
 
     gauge_frame_t frame;
     tu_to_frames(&img, &frame, 1);
@@ -21,7 +21,7 @@ static void test_to_frame(void) {
     TEST_ASSERT_EQUAL(SAMPLE_HEIGHT, frame.height);
     TEST_ASSERT_EQUAL(SAMPLE_WIDTH * SAMPLE_HEIGHT, frame.buf_len);
 
-    TU_EXAMPLES_SAVE_FRAME("test_to_frame", &frame);
+    EXAMPLES_SAVE_FRAME("test_to_frame", &frame);
 }
 
 int main(void) {

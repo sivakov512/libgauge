@@ -12,17 +12,18 @@ static const size_t SAMPLE_HEIGHT = 240;
 static void test_load(void) {
     tu_image_t img;
 
-    TEST_ASSERT_TRUE(TU_FIXTURES_LOAD_IMAGE("common/sample_1.jpg", &img));
+    FIXTURES_LOAD_IMAGE("common/sample_1.jpg", &img);
     TEST_ASSERT_EQUAL(SAMPLE_WIDTH, img.width);
     TEST_ASSERT_EQUAL(SAMPLE_HEIGHT, img.height);
 
-    TU_EXAMPLES_SAVE_IMAGE("test_load", &img);
+    EXAMPLES_SAVE_IMAGE("test_load", &img);
 }
 
 static void test_load_dir(void) {
     static tu_image_t imgs[TU_MAX_FILES];
 
-    size_t count = TU_FIXTURES_LOAD_IMAGES("common", imgs, TU_MAX_FILES);
+    size_t count;
+    FIXTURES_LOAD_IMAGES("common", imgs, TU_MAX_FILES, count);
     TEST_ASSERT_EQUAL(1, count);
 }
 

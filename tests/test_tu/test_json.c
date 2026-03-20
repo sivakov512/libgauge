@@ -40,8 +40,8 @@ static void test_frame_roundtrip(void) {
     TEST_ASSERT_TRUE(tu_json_write_frame(path, &src));
 
     static uint8_t dst_buf[FRAME_PIXELS];
-    gauge_frame_t dst;
-    TEST_ASSERT_TRUE(tu_json_read_frame(path, dst_buf, sizeof(dst_buf), &dst));
+    gauge_frame_t dst = {.buf = dst_buf, .buf_len = sizeof(dst_buf)};
+    TEST_ASSERT_TRUE(tu_json_read_frame(path, &dst));
 
     TEST_ASSERT_EQUAL(src.width, dst.width);
     TEST_ASSERT_EQUAL(src.height, dst.height);

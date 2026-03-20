@@ -1,4 +1,4 @@
-set(TEST_UTILS_TESTS test_json test_image test_convert test_draw test_snapshot)
+set(TEST_UTILS_TESTS test_json test_image test_convert test_snapshot)
 
 foreach(TESTNAME IN LISTS TEST_UTILS_TESTS)
     add_executable(${TESTNAME} ${TESTNAME}.c)

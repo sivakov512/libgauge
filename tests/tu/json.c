@@ -39,8 +39,7 @@ static char *read_file(const char *path) {
     return buf;
 }
 
-bool tu_json_read_frame(const char *path, uint8_t *buf, size_t buf_len,
-                        gauge_frame_t *out) {
+bool tu_json_read_frame(const char *path, gauge_frame_t *out) {
     char *text = read_file(path);
     if (!text) {
         return false;
@@ -66,17 +65,16 @@ bool tu_json_read_frame(const char *path, uint8_t *buf, size_t buf_len,
     size_t height = (size_t) jheight->valueint;
     size_t pixels = width * height;
 
-    if (pixels > buf_len || (size_t) cJSON_GetArraySize(jbuf) != pixels) {
+    if (pixels > out->buf_len || (size_t) cJSON_GetArraySize(jbuf) != pixels) {
         cJSON_Delete(root);
         return false;
     }
 
     cJSON *item = jbuf->child;
     for (size_t i = 0; i < pixels && item; i++, item = item->next) {
-        buf[i] = (uint8_t) item->valueint;
+        out->buf[i] = (uint8_t) item->valueint;
     }
 
-    out->buf = buf;
     out->buf_len = pixels;
     out->width = width;
     out->height = height;
@@ -161,7 +159,7 @@ bool tu_json_write_line(const char *path, const gauge_line_t *line) {
     cJSON_AddNumberToObject(root, "direction_x", (double) line->direction.x);
     cJSON_AddNumberToObject(root, "direction_y", (double) line->direction.y);
 
-    char *text = cJSON_Print(root);
+    char *text = cJSON_PrintUnformatted(root);
     cJSON_Delete(root);
     if (!text) {
         return false;
@@ -231,7 +229,7 @@ bool tu_json_write_calibration(const char *path,
     cJSON_AddNumberToObject(root, "spin", (double) ca_data->spin);
     cJSON_AddNumberToObject(root, "arrow_len", (double) ca_data->arrow_len);
 
-    char *text = cJSON_Print(root);
+    char *text = cJSON_PrintUnformatted(root);
     cJSON_Delete(root);
     if (!text) {
         return false;
@@ -274,7 +272,105 @@ bool tu_json_write_float(const char *path, float value) {
         return false;
     }
 
-    char *text = cJSON_Print(root);
+    char *text = cJSON_PrintUnformatted(root);
+    cJSON_Delete(root);
+    if (!text) {
+        return false;
+    }
+
+    tu_ensure_parent_dir(path);
+    FILE *file = fopen(path, "wb");
+    if (!file) {
+        free(text);
+        return false;
+    }
+
+    fputs(text, file);
+    fclose(file);
+    free(text);
+    return true;
+}
+
+bool tu_json_read_pointf(const char *path, gauge_pointf_t *out) {
+    char *text = read_file(path);
+    if (!text) {
+        return false;
+    }
+
+    cJSON *root = cJSON_Parse(text);
+    free(text);
+    if (!root) {
+        return false;
+    }
+
+    cJSON *jpx = cJSON_GetObjectItem(root, "x");
+    cJSON *jpy = cJSON_GetObjectItem(root, "y");
+
+    if (!cJSON_IsNumber(jpx) || !cJSON_IsNumber(jpy)) {
+        cJSON_Delete(root);
+        return false;
+    }
+
+    out->x = (float) jpx->valuedouble;
+    out->y = (float) jpy->valuedouble;
+
+    cJSON_Delete(root);
+    return true;
+}
+
+bool tu_json_write_pointf(const char *path, const gauge_pointf_t *point) {
+    cJSON *root = cJSON_CreateObject();
+    if (!root) {
+        return false;
+    }
+
+    cJSON_AddNumberToObject(root, "x", (double) point->x);
+    cJSON_AddNumberToObject(root, "y", (double) point->y);
+
+    char *text = cJSON_PrintUnformatted(root);
+    cJSON_Delete(root);
+    if (!text) {
+        return false;
+    }
+
+    tu_ensure_parent_dir(path);
+    FILE *file = fopen(path, "wb");
+    if (!file) {
+        free(text);
+        return false;
+    }
+
+    fputs(text, file);
+    fclose(file);
+    free(text);
+    return true;
+}
+
+bool tu_json_read_size_t(const char *path, size_t *out) {
+    char *text = read_file(path);
+    if (!text) {
+        return false;
+    }
+
+    cJSON *root = cJSON_Parse(text);
+    free(text);
+    if (!root || !cJSON_IsNumber(root)) {
+        cJSON_Delete(root);
+        return false;
+    }
+
+    *out = (size_t) root->valueint;
+    cJSON_Delete(root);
+    return true;
+}
+
+bool tu_json_write_size_t(const char *path, size_t value) {
+    cJSON *root = cJSON_CreateNumber((double) value);
+    if (!root) {
+        return false;
+    }
+
+    char *text = cJSON_PrintUnformatted(root);
     cJSON_Delete(root);
     if (!text) {
         return false;
