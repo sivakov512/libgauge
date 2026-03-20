@@ -6,3 +6,4 @@ add_library(gauge STATIC
     src/gauge.c
 )
 target_include_directories(gauge PUBLIC include)
+target_link_libraries(gauge PUBLIC m)

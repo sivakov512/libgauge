@@ -1,9 +1,31 @@
 #include "gauge.h"
+#include "gauge/utils.h"
 #include <math.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+
+// --- Utils ---
+
+float gauge_utils_normalize_angle(float angle_rad, gauge_spin_t direction) {
+    while (angle_rad > GAUGE_PI) {
+        angle_rad -= 2 * GAUGE_PI;
+    }
+    while (angle_rad < -GAUGE_PI) {
+        angle_rad += 2 * GAUGE_PI;
+    }
+
+    if (direction > 0 && angle_rad < 0) {
+        angle_rad += 2 * GAUGE_PI;
+    } else if (direction < 0 && angle_rad > 0) {
+        angle_rad -= 2 * GAUGE_PI;
+    }
+
+    return angle_rad;
+}
+
+// --- CV ---
 
 #define BINARIZE_UP 1
 #define BINARIZE_DOWN 0
@@ -257,6 +279,8 @@ size_t gauge_cv_arrow_length(const gauge_frame_t *frame,
     }
     return max_dist;
 }
+
+// --- Calibrate ---
 
 static gauge_err_t frame_line(gauge_frame_t *frame, const gauge_frame_t *bg,
                               gauge_line_t *line_out) {
