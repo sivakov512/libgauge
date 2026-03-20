@@ -15,9 +15,17 @@ static const size_t NEIGHBORHOOD[NEIGHBORHOOD_SIZE][2] = {
 
 #define KINDA_ZERO 1e-6
 
+#define DIRECTION_SEARCH_STEP_RAD 0.175F
+
+static inline size_t size_t_max(size_t first, size_t second) {
+    return first > second ? first : second;
+}
+
 void gauge_cv_calculate_background(const gauge_frame_t *frames, size_t frames_len,
                                    gauge_frame_t *bg_out) {
-    for (size_t frame_i = 0; frame_i < frames_len; ++frame_i) {
+    memcpy(bg_out->buf, frames[0].buf, sizeof(uint8_t) * frames[0].buf_len);
+
+    for (size_t frame_i = 1; frame_i < frames_len; ++frame_i) {
         const gauge_frame_t *frame = &frames[frame_i];
         for (size_t pixel_i = 0; pixel_i < frame->buf_len; ++pixel_i) {
             if (frame->buf[pixel_i] > bg_out->buf[pixel_i]) {
@@ -74,7 +82,7 @@ static size_t flood_fill(gauge_frame_t *frame, size_t index, uint8_t label,
     return size;
 }
 
-gauge_err_t gauge_extract_largest_blob(gauge_frame_t *frame) {
+gauge_err_t gauge_cv_extract_largest_blob(gauge_frame_t *frame) {
     uint8_t max_label = 0;
     size_t max_label_size = 0;
 
@@ -229,9 +237,9 @@ gauge_err_t gauge_cv_intersect_lines(const gauge_line_t *line1,
     return GAUGE_OK;
 }
 
-float gauge_cv_arrow_length(const gauge_frame_t *frame,
-                            const gauge_pointf_t *pivot) {
-    float max_dist = 0;
+size_t gauge_cv_arrow_length(const gauge_frame_t *frame,
+                             const gauge_pointf_t *pivot) {
+    size_t max_dist = 0;
     for (size_t pos_y = 0; pos_y < frame->height; ++pos_y) {
         for (size_t pos_x = 0; pos_x < frame->width; ++pos_x) {
             size_t index = gauge_frame_pixel_index(frame, pos_x, pos_y);
@@ -239,7 +247,8 @@ float gauge_cv_arrow_length(const gauge_frame_t *frame,
             if (frame->buf[index] == BINARIZE_UP) {
                 float delta_x = (float) pos_x - pivot->x;
                 float delta_y = (float) pos_y - pivot->y;
-                float dist = sqrtf((delta_x * delta_x) + (delta_y * delta_y));
+                size_t dist = (size_t) roundf(
+                    sqrtf((delta_x * delta_x) + (delta_y * delta_y)));
                 if (dist > max_dist) {
                     max_dist = dist;
                 }
@@ -247,4 +256,113 @@ float gauge_cv_arrow_length(const gauge_frame_t *frame,
         }
     }
     return max_dist;
+}
+
+static gauge_err_t frame_line(gauge_frame_t *frame, const gauge_frame_t *bg,
+                              gauge_line_t *line_out) {
+    gauge_cv_subtract_background(frame, bg);
+    gauge_cv_binarize(frame, GAUGE_BINARIZATION_THRESHOLD);
+    gauge_err_t err = gauge_cv_extract_largest_blob(frame);
+    if (err != GAUGE_OK) {
+        return err;
+    }
+
+    return gauge_cv_blob_to_line(frame, line_out);
+}
+
+static gauge_err_t frame_angle(gauge_frame_t *frame, const gauge_frame_t *bg,
+                               const gauge_pointf_t *pivot, float *angle_out) {
+    gauge_cv_subtract_background(frame, bg);
+    gauge_cv_binarize(frame, GAUGE_BINARIZATION_THRESHOLD);
+    gauge_err_t err = gauge_cv_extract_largest_blob(frame);
+    if (err != GAUGE_OK) {
+        return err;
+    }
+
+    gauge_pointf_t point;
+    err = center_of_mass(frame, &point);
+    if (err != GAUGE_OK) {
+        return err;
+    }
+
+    *angle_out = atan2f(point.y - pivot->y, point.x - pivot->x);
+    return GAUGE_OK;
+}
+
+gauge_err_t gauge_calibrate(gauge_frame_t *frames, size_t frames_len,
+                            gauge_calibration_data_t *ca_data_out) {
+    if (frames_len < 3) {
+        return GAUGE_ERR_SPIN_UNDETERMINED;
+    }
+
+    gauge_frame_t *start_frame = &frames[0];
+    gauge_frame_t *end_frame = &frames[frames_len - 1];
+    if (start_frame->height != end_frame->height ||
+        start_frame->width != end_frame->width) {
+        return GAUGE_ERR_FRAME_SIZE_MISMATCH;
+    }
+
+    uint8_t *bg_buf = malloc(sizeof(uint8_t) * frames[0].buf_len);
+    gauge_frame_t bg = {.buf = bg_buf,
+                        .buf_len = frames[0].buf_len,
+                        .width = frames[0].width,
+                        .height = frames[0].height};
+    gauge_cv_calculate_background(frames, frames_len, &bg);
+
+    gauge_line_t start_line = {0};
+    gauge_err_t err = frame_line(start_frame, &bg, &start_line);
+    if (err != GAUGE_OK) {
+        goto ret;
+    }
+
+    gauge_line_t end_line = {0};
+    err = frame_line(end_frame, &bg, &end_line);
+    if (err != GAUGE_OK) {
+        goto ret;
+    }
+
+    gauge_pointf_t pivot;
+    err = gauge_cv_intersect_lines(&start_line, &end_line, &pivot);
+    if (err != GAUGE_OK) {
+        goto ret;
+    }
+
+    float start_angle =
+        atan2f(start_line.origin.y - pivot.y, start_line.origin.x - pivot.x);
+
+    int8_t direction = 0;
+    for (size_t i = 1; i < frames_len - 1; ++i) {
+        float angle;
+        if (frame_angle(&frames[i], &bg, &pivot, &angle) != GAUGE_OK) {
+            continue;
+        }
+
+        float diff = angle - start_angle;
+        if (fabsf(diff) > DIRECTION_SEARCH_STEP_RAD) {
+            direction = diff > 0 ? 1 : -1;
+            break;
+        }
+    }
+    if (direction == 0) {
+        err = GAUGE_ERR_SPIN_UNDETERMINED;
+        goto ret;
+    }
+
+    size_t length = size_t_max(gauge_cv_arrow_length(start_frame, &pivot),
+                               gauge_cv_arrow_length(end_frame, &pivot));
+    float end_angle =
+        atan2f(end_line.origin.y - pivot.y, end_line.origin.x - pivot.x);
+
+    *ca_data_out = (gauge_calibration_data_t) {
+        .pivot = (gauge_point_t) {.x = (size_t) roundf(pivot.x),
+                                  .y = (size_t) roundf(pivot.y)},
+        .angle_start_rad = start_angle,
+        .angle_end_rad = end_angle,
+        .spin = direction,
+        .arrow_len = length,
+    };
+
+ret:
+    free(bg_buf);
+    return err;
 }

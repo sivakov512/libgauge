@@ -19,7 +19,7 @@ static void test_extract_largest_blob(const char *frame_path, const char *name) 
     TEST_ASSERT_TRUE(
         TU_FIXTURES_LOAD_FRAME(frame_path, frame_buf, TU_FRAME_BUF_LEN, &frame));
 
-    TEST_ASSERT_EQUAL(GAUGE_OK, gauge_extract_largest_blob(&frame));
+    TEST_ASSERT_EQUAL(GAUGE_OK, gauge_cv_extract_largest_blob(&frame));
 
     TU_SNAPSHOT_ASSERT_FRAME(name, &frame);
 
@@ -57,7 +57,7 @@ static void test_extract_largest_blob__single_blob(void) {
                            .buf_len = SYNTHETIC_FRAME_BUF_LEN,
                            .width = SYNTHETIC_FRAME_SIZE,
                            .height = SYNTHETIC_FRAME_SIZE};
-    TEST_ASSERT_EQUAL(GAUGE_OK, gauge_extract_largest_blob(&frame));
+    TEST_ASSERT_EQUAL(GAUGE_OK, gauge_cv_extract_largest_blob(&frame));
     for (size_t ii = 0; ii < frame.buf_len; ++ii) {
         TEST_ASSERT_EQUAL_UINT8(1, frame.buf[ii]);
     }
@@ -70,7 +70,8 @@ static void test_extract_largest_blob__blob_not_found(void) {
                            .buf_len = SYNTHETIC_FRAME_BUF_LEN,
                            .width = SYNTHETIC_FRAME_SIZE,
                            .height = SYNTHETIC_FRAME_SIZE};
-    TEST_ASSERT_EQUAL(GAUGE_ERR_BLOB_NOT_FOUND, gauge_extract_largest_blob(&frame));
+    TEST_ASSERT_EQUAL(GAUGE_ERR_BLOB_NOT_FOUND,
+                      gauge_cv_extract_largest_blob(&frame));
 }
 
 static void test_extract_largest_blob__too_many_blobs(void) {
@@ -87,7 +88,8 @@ static void test_extract_largest_blob__too_many_blobs(void) {
                            .buf_len = TOO_MANY_BLOBS_FRAME_BUF_LEN,
                            .width = TOO_MANY_BLOBS_FRAME_SIZE,
                            .height = TOO_MANY_BLOBS_FRAME_SIZE};
-    TEST_ASSERT_EQUAL(GAUGE_ERR_TOO_MANY_BLOBS, gauge_extract_largest_blob(&frame));
+    TEST_ASSERT_EQUAL(GAUGE_ERR_TOO_MANY_BLOBS,
+                      gauge_cv_extract_largest_blob(&frame));
 }
 
 int main(void) {

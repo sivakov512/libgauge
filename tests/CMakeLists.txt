@@ -32,3 +32,4 @@ add_subdirectory(test_tu)
 
 # Tests
 add_subdirectory(test_cv)
+add_subdirectory(test_gauge)

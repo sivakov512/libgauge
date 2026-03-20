@@ -1,6 +1,7 @@
 #pragma once
 
 #include "gauge.h"
+#include <stddef.h>
 #include <string.h>
 
 #ifdef __cplusplus
@@ -14,7 +15,7 @@ void gauge_cv_subtract_background(gauge_frame_t *frame, const gauge_frame_t *bg)
 
 void gauge_cv_binarize(gauge_frame_t *frame, uint8_t threshold);
 
-gauge_err_t gauge_extract_largest_blob(gauge_frame_t *frame);
+gauge_err_t gauge_cv_extract_largest_blob(gauge_frame_t *frame);
 
 gauge_err_t gauge_cv_blob_to_line(const gauge_frame_t *frame,
                                   gauge_line_t *line_out);
@@ -23,7 +24,8 @@ gauge_err_t gauge_cv_intersect_lines(const gauge_line_t *line1,
                                      const gauge_line_t *line2,
                                      gauge_pointf_t *intersection_out);
 
-float gauge_cv_arrow_length(const gauge_frame_t *frame, const gauge_pointf_t *pivot);
+size_t gauge_cv_arrow_length(const gauge_frame_t *frame,
+                             const gauge_pointf_t *pivot);
 
 #ifdef __cplusplus
 }

@@ -26,9 +26,9 @@ static void test_arrow_length(const char *frame_path, const char *line1_path,
     gauge_pointf_t pivot;
     TEST_ASSERT_EQUAL(GAUGE_OK, gauge_cv_intersect_lines(&line1, &line2, &pivot));
 
-    float arrow_len = gauge_cv_arrow_length(&frame, &pivot);
+    size_t arrow_len = gauge_cv_arrow_length(&frame, &pivot);
 
-    TU_SNAPSHOT_ASSERT_FLOAT(name, arrow_len, ARROW_LEN_EPSILON);
+    TU_SNAPSHOT_ASSERT_FLOAT(name, (float) arrow_len, ARROW_LEN_EPSILON);
 }
 
 /* clang-format off */
