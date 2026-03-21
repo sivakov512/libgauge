@@ -54,22 +54,25 @@ formatting:
 check: test lint formatting
 
 
-.PHONY: reference-install reference-lint reference-format reference-test reference-check
+.PHONY: reference-init reference-install reference-lint reference-format reference-test reference-check
 
-reference-install:
+reference-init:
+	@if [ ! -f reference/.git ]; then git submodule update --init reference; fi
+
+reference-install: reference-init
 	cd reference && uv sync
 
-reference-lint:
+reference-lint: reference-init
 	cd reference && uv run ruff check .
 	cd reference && uv run ruff format --check .
 	cd reference && uv run basedpyright
 	cd reference && uv run mypy gauge tests
 
-reference-format:
+reference-format: reference-init
 	cd reference && uv run ruff check --fix .
 	cd reference && uv run ruff format .
 
-reference-test:
+reference-test: reference-init
 	cd reference && uv run pytest
 
 reference-check: reference-lint reference-test

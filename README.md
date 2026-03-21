@@ -5,6 +5,8 @@
 
 C library for reading analog gauge values from video frames. Designed for constrained environments — no OpenCV, no heavy dependencies. Works on embedded systems with a camera.
 
+Python reference implementation used for algorithm prototyping: [sivakov512/libgauge-reference](https://github.com/sivakov512/libgauge-reference).
+
 ## Requirements
 
 - CMake 3.16+
