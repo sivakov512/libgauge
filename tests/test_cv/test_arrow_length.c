@@ -22,9 +22,9 @@ static void test_arrow_length(const char *frame_path, gauge_pointf_t *pivot,
 
 #define CASES(X)                                                                    \
     X(test_arrow_length__set_1_00767591132, "set/1/00767591132_largest.json",       \
-      ((gauge_pointf_t) {152.96891720365855F, 98.83491199663723F}))                 \
+      ((gauge_pointf_t) {152.9689F, 98.83491F}))                                    \
     X(test_arrow_length__set_1_12756622577, "set/1/12756622577_largest.json",       \
-      ((gauge_pointf_t) {152.96891720365855F, 98.83491199663723F}))
+      ((gauge_pointf_t) {152.9689F, 98.83491F}))
 
 #define DEF_TEST(name, frame, PIVOT)                                                \
     static void name(void) {                                                        \

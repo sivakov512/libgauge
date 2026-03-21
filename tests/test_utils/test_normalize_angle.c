@@ -14,7 +14,7 @@ static void test_normalize_angle(float angle_rad, gauge_spin_t direction,
     TEST_ASSERT_FLOAT_WITHIN(EPSILON, expected, got);
 }
 
-#define TWO_PI 6.28318530717958647F // NOLINT(readability-magic-numbers)
+#define TWO_PI 6.283185F // NOLINT(readability-magic-numbers)
 
 // clang-format off
 #define CASES(X) \

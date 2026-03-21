@@ -36,14 +36,18 @@ static void save_examples(const char *first_path, const char *last_path,
     save_example_on(last_path, ca_data, example_name);
 }
 
-static void test_calibrate(const char *images_dir, const char *first_path,
-                           const char *last_path, const char *name) {
+static void test_calibrate_by_axis_intersection(const char *images_dir,
+                                                const char *first_path,
+                                                const char *last_path,
+                                                const char *name) {
     size_t count;
     FIXTURES_LOAD_IMAGES(images_dir, g_imgs, MAX_FRAMES, count);
     tu_to_frames(g_imgs, g_frames, count);
 
     gauge_calibration_data_t ca_data;
-    TEST_ASSERT_EQUAL(GAUGE_OK, gauge_calibrate(g_frames, count, &ca_data));
+    TEST_ASSERT_EQUAL(GAUGE_OK,
+                      gauge_calibrate_by_axis_intersection(
+                          g_frames, count, GAUGE_BINARIZATION_THRESHOLD, &ca_data));
 
     SNAPSHOT_ASSERT_CALIBRATION(name, &ca_data);
 
@@ -51,12 +55,12 @@ static void test_calibrate(const char *images_dir, const char *first_path,
 }
 
 #define CASES(X)                                                                    \
-    X(test_calibrate__set_1, "set/1", "set/1/00767591132.jpg",                      \
+    X(test_calibrate_by_axis_intersection__set_1, "set/1", "set/1/00767591132.jpg", \
       "set/1/12756622577.jpg")
 
 #define DEF_TEST(name, dir, first, last)                                            \
     static void name(void) {                                                        \
-        test_calibrate(dir, first, last, #name);                                    \
+        test_calibrate_by_axis_intersection(dir, first, last, #name);               \
     }
 CASES(DEF_TEST)
 #undef DEF_TEST
@@ -79,7 +83,8 @@ static void test_errored_if_too_few_frames(void) {
 
     gauge_calibration_data_t ca_data;
     TEST_ASSERT_EQUAL(GAUGE_ERR_SPIN_UNDETERMINED,
-                      gauge_calibrate(frames, 2, &ca_data));
+                      gauge_calibrate_by_axis_intersection(
+                          frames, 2, GAUGE_BINARIZATION_THRESHOLD, &ca_data));
 }
 
 static void test_errored_if_frame_sizes_mismatch(void) {
@@ -101,7 +106,8 @@ static void test_errored_if_frame_sizes_mismatch(void) {
 
     gauge_calibration_data_t ca_data;
     TEST_ASSERT_EQUAL(GAUGE_ERR_FRAME_SIZE_MISMATCH,
-                      gauge_calibrate(frames, 3, &ca_data));
+                      gauge_calibrate_by_axis_intersection(
+                          frames, 3, GAUGE_BINARIZATION_THRESHOLD, &ca_data));
 }
 
 int main(void) {

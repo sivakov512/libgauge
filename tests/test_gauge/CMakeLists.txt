@@ -1,6 +1,6 @@
 set(TEST_GAUGE_TESTS
-    test_calibrate
-    test_measure
+    test_calibrate_by_axis_intersection
+    test_scan_radial
 )
 
 foreach(TESTNAME IN LISTS TEST_GAUGE_TESTS)

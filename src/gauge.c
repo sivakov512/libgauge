@@ -10,16 +10,16 @@
 
 float gauge_utils_normalize_angle(float angle_rad, gauge_spin_t direction) {
     while (angle_rad > GAUGE_PI) {
-        angle_rad -= 2 * GAUGE_PI;
+        angle_rad -= GAUGE_TWO_PI;
     }
     while (angle_rad < -GAUGE_PI) {
-        angle_rad += 2 * GAUGE_PI;
+        angle_rad += GAUGE_TWO_PI;
     }
 
     if (direction > 0 && angle_rad < 0) {
-        angle_rad += 2 * GAUGE_PI;
+        angle_rad += GAUGE_TWO_PI;
     } else if (direction < 0 && angle_rad > 0) {
-        angle_rad -= 2 * GAUGE_PI;
+        angle_rad -= GAUGE_TWO_PI;
     }
 
     return angle_rad;
@@ -35,7 +35,7 @@ static const int NEIGHBORHOOD[NEIGHBORHOOD_SIZE][2] = {
     {-1, 0}, {1, 0}, {0, -1}, {0, 1}, {-1, -1}, {1, -1}, {-1, 1}, {1, 1},
 };
 
-#define KINDA_ZERO 1e-6
+#define KINDA_ZERO 1e-6F
 
 #define DIRECTION_SEARCH_STEP_RAD 0.175F
 
@@ -186,8 +186,8 @@ static void principal_axis(const gauge_frame_t *frame, const gauge_pointf_t *mpo
         for (size_t pos_x = 0; pos_x < frame->width; ++pos_x) {
             if (frame->buf[gauge_frame_pixel_index(frame, pos_x, pos_y)] ==
                 BINARIZE_UP) {
-                float delta_x = (float) pos_x - (float) mpoint->x;
-                float delta_y = (float) pos_y - (float) mpoint->y;
+                float delta_x = (float) pos_x - mpoint->x;
+                float delta_y = (float) pos_y - mpoint->y;
                 cxx += delta_x * delta_x;
                 cxy += delta_x * delta_y;
                 cyy += delta_y * delta_y;
@@ -204,7 +204,7 @@ static void principal_axis(const gauge_frame_t *frame, const gauge_pointf_t *mpo
     float trace = cxx + cyy;
     float det = (cxx * cyy) - (cxy * cxy);
     float D = // NOLINT(readability-identifier-naming,readability-identifier-length)
-        (trace * trace) - (4 * det);
+        (trace * trace) - (4.0F * det);      // NOLINT(readability-magic-numbers)
     float sqrt_D = sqrtf(fmaxf(0, D));       // NOLINT(readability-identifier-naming)
     float lambda1 = (trace + sqrt_D) / 2.0F; // NOLINT(readability-magic-numbers)
 
@@ -281,12 +281,12 @@ size_t gauge_cv_arrow_length(const gauge_frame_t *frame,
     return max_dist;
 }
 
-// --- Calibrate ---
+// --- Calibrate by axis intersection ---
 
 static gauge_err_t frame_line(gauge_frame_t *frame, const gauge_frame_t *bg,
-                              gauge_line_t *line_out) {
+                              uint8_t threshold, gauge_line_t *line_out) {
     gauge_cv_subtract_background(frame, bg);
-    gauge_cv_binarize(frame, GAUGE_BINARIZATION_THRESHOLD);
+    gauge_cv_binarize(frame, threshold);
     gauge_err_t err = gauge_cv_extract_largest_blob(frame);
     if (err != GAUGE_OK) {
         return err;
@@ -296,9 +296,10 @@ static gauge_err_t frame_line(gauge_frame_t *frame, const gauge_frame_t *bg,
 }
 
 static gauge_err_t frame_angle(gauge_frame_t *frame, const gauge_frame_t *bg,
-                               const gauge_pointf_t *pivot, float *angle_out) {
+                               uint8_t threshold, const gauge_pointf_t *pivot,
+                               float *angle_out) {
     gauge_cv_subtract_background(frame, bg);
-    gauge_cv_binarize(frame, GAUGE_BINARIZATION_THRESHOLD);
+    gauge_cv_binarize(frame, threshold);
     gauge_err_t err = gauge_cv_extract_largest_blob(frame);
     if (err != GAUGE_OK) {
         return err;
@@ -314,8 +315,9 @@ static gauge_err_t frame_angle(gauge_frame_t *frame, const gauge_frame_t *bg,
     return GAUGE_OK;
 }
 
-gauge_err_t gauge_calibrate(gauge_frame_t *frames, size_t frames_len,
-                            gauge_calibration_data_t *ca_data_out) {
+gauge_err_t gauge_calibrate_by_axis_intersection(
+    gauge_frame_t *frames, size_t frames_len, uint8_t binarization_threshold,
+    gauge_calibration_data_t *ca_data_out) {
     if (frames_len < 3) {
         return GAUGE_ERR_SPIN_UNDETERMINED;
     }
@@ -335,13 +337,14 @@ gauge_err_t gauge_calibrate(gauge_frame_t *frames, size_t frames_len,
     gauge_cv_calculate_background(frames, frames_len, &bg);
 
     gauge_line_t start_line = {0};
-    gauge_err_t err = frame_line(start_frame, &bg, &start_line);
+    gauge_err_t err =
+        frame_line(start_frame, &bg, binarization_threshold, &start_line);
     if (err != GAUGE_OK) {
         goto ret;
     }
 
     gauge_line_t end_line = {0};
-    err = frame_line(end_frame, &bg, &end_line);
+    err = frame_line(end_frame, &bg, binarization_threshold, &end_line);
     if (err != GAUGE_OK) {
         goto ret;
     }
@@ -358,7 +361,8 @@ gauge_err_t gauge_calibrate(gauge_frame_t *frames, size_t frames_len,
     int8_t direction = 0;
     for (size_t i = 1; i < frames_len - 1; ++i) {
         float angle;
-        if (frame_angle(&frames[i], &bg, &pivot, &angle) != GAUGE_OK) {
+        if (frame_angle(&frames[i], &bg, binarization_threshold, &pivot, &angle) !=
+            GAUGE_OK) {
             continue;
         }
 
@@ -391,11 +395,11 @@ ret:
     return err;
 }
 
-// --- Measure ---
+// --- Scan radial ---
 
-float gauge_measure(const gauge_frame_t *frame,
-                    const gauge_calibration_data_t *ca_data,
-                    float radial_scan_step) {
+float gauge_scan_radial(const gauge_frame_t *frame,
+                        const gauge_calibration_data_t *ca_data,
+                        float radial_scan_step) {
     float scan_diff = gauge_utils_normalize_angle(
         ca_data->angle_end_rad - ca_data->angle_start_rad, ca_data->spin);
     float angle_step = radial_scan_step * (float) ca_data->spin;
