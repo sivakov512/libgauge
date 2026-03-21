@@ -21,8 +21,8 @@ static const float LINE_DIRECTION_X = 30.0F;
 static const float LINE_DIRECTION_Y = 40.0F;
 static const float LINE_FLOAT_EPSILON = 1e-5F;
 
-static const size_t CA_PIVOT_X = 100;
-static const size_t CA_PIVOT_Y = 200;
+static const float CA_PIVOT_X = 100.0F;
+static const float CA_PIVOT_Y = 200.0F;
 static const float CA_ANGLE_START = 1.23F;
 static const float CA_ANGLE_END = 4.56F;
 static const size_t CA_ARROW_LEN = 50;

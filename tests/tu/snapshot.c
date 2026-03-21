@@ -96,8 +96,8 @@ void tu_snapshot_assert_calibration(const char *snapshots_dir, const char *name,
 
     gauge_calibration_data_t stored;
     TEST_ASSERT_TRUE(tu_json_read_calibration(path, &stored));
-    TEST_ASSERT_EQUAL_size_t(ca_data->pivot.x, stored.pivot.x);
-    TEST_ASSERT_EQUAL_size_t(ca_data->pivot.y, stored.pivot.y);
+    TEST_ASSERT_FLOAT_WITHIN(ANGLE_EPSILON, ca_data->pivot.x, stored.pivot.x);
+    TEST_ASSERT_FLOAT_WITHIN(ANGLE_EPSILON, ca_data->pivot.y, stored.pivot.y);
     TEST_ASSERT_EQUAL_INT8(ca_data->spin, stored.spin);
     TEST_ASSERT_EQUAL_size_t(ca_data->arrow_len, stored.arrow_len);
     TEST_ASSERT_FLOAT_WITHIN(ANGLE_EPSILON, ca_data->angle_start_rad,

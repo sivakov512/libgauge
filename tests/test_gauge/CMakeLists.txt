@@ -1,5 +1,6 @@
 set(TEST_GAUGE_TESTS
     test_calibrate
+    test_measure
 )
 
 foreach(TESTNAME IN LISTS TEST_GAUGE_TESTS)

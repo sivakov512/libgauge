@@ -13,6 +13,7 @@ typedef int8_t gauge_spin_t;
 #define GAUGE_SPIN_CCW ((gauge_spin_t) - 1)
 
 #define GAUGE_BINARIZATION_THRESHOLD 20
+#define GAUGE_MEASURE_RADIAL_SCAN_STEP 0.008726646F
 
 typedef struct {
     uint8_t *buf;
@@ -38,7 +39,7 @@ typedef struct {
 } gauge_line_t;
 
 typedef struct {
-    gauge_point_t pivot;
+    gauge_pointf_t pivot;
     float angle_start_rad;
     float angle_end_rad;
     gauge_spin_t spin;
@@ -61,8 +62,8 @@ static inline size_t gauge_frame_pixel_index(const gauge_frame_t *frame,
 
 gauge_err_t gauge_calibrate(gauge_frame_t *frames, size_t frames_len,
                             gauge_calibration_data_t *ca_data_out);
-gauge_err_t gauge_measure(gauge_frame_t *frame, gauge_calibration_data_t *ca_data,
-                          float *angle_rad_out);
+float gauge_measure(const gauge_frame_t *frame,
+                    const gauge_calibration_data_t *ca_data, float radial_scan_step);
 
 #ifdef __cplusplus
 }

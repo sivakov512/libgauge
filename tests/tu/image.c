@@ -105,8 +105,8 @@ void tu_draw_vector(tu_image_t *img, float pivot_x, float pivot_y, float angle_r
 }
 
 void tu_draw_calibration(tu_image_t *img, const gauge_calibration_data_t *ca_data) {
-    float pivot_x = (float) ca_data->pivot.x;
-    float pivot_y = (float) ca_data->pivot.y;
+    float pivot_x = ca_data->pivot.x;
+    float pivot_y = ca_data->pivot.y;
     float arrow_len = (float) ca_data->arrow_len;
 
     tu_draw_vector(img, pivot_x, pivot_y, ca_data->angle_start_rad, arrow_len,

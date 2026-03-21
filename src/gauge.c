@@ -31,7 +31,7 @@ float gauge_utils_normalize_angle(float angle_rad, gauge_spin_t direction) {
 #define BINARIZE_DOWN 0
 
 #define NEIGHBORHOOD_SIZE 8
-static const size_t NEIGHBORHOOD[NEIGHBORHOOD_SIZE][2] = {
+static const int NEIGHBORHOOD[NEIGHBORHOOD_SIZE][2] = {
     {-1, 0}, {1, 0}, {0, -1}, {0, 1}, {-1, -1}, {1, -1}, {-1, 1}, {1, 1},
 };
 
@@ -87,11 +87,12 @@ static size_t flood_fill(gauge_frame_t *frame, size_t index, uint8_t label,
         size_t cur_y = idx / frame->width;
 
         for (uint8_t i = 0; i < NEIGHBORHOOD_SIZE; ++i) {
-            size_t nx = cur_x + NEIGHBORHOOD[i][0]; // NOLINT
-            size_t ny = cur_y + NEIGHBORHOOD[i][1]; // NOLINT
+            int nx = (int) cur_x + NEIGHBORHOOD[i][0];
+            int ny = (int) cur_y + NEIGHBORHOOD[i][1];
 
-            if ((0 <= nx && nx < frame->width) && (0 <= ny && ny < frame->height)) {
-                size_t ni = gauge_frame_pixel_index(frame, nx, ny); // NOLINT
+            if (nx >= 0 && (size_t) nx < frame->width && ny >= 0 &&
+                (size_t) ny < frame->height) {
+                size_t ni = gauge_frame_pixel_index(frame, (size_t) nx, (size_t) ny);
                 if (frame->buf[ni] == BINARIZE_UP) {
                     frame->buf[ni] = label;
                     *stack_top++ = ni;
@@ -378,8 +379,7 @@ gauge_err_t gauge_calibrate(gauge_frame_t *frames, size_t frames_len,
         atan2f(end_line.origin.y - pivot.y, end_line.origin.x - pivot.x);
 
     *ca_data_out = (gauge_calibration_data_t) {
-        .pivot = (gauge_point_t) {.x = (size_t) roundf(pivot.x),
-                                  .y = (size_t) roundf(pivot.y)},
+        .pivot = pivot,
         .angle_start_rad = start_angle,
         .angle_end_rad = end_angle,
         .spin = direction,
@@ -389,4 +389,46 @@ gauge_err_t gauge_calibrate(gauge_frame_t *frames, size_t frames_len,
 ret:
     free(bg_buf);
     return err;
+}
+
+// --- Measure ---
+
+float gauge_measure(const gauge_frame_t *frame,
+                    const gauge_calibration_data_t *ca_data,
+                    float radial_scan_step) {
+    float scan_diff = gauge_utils_normalize_angle(
+        ca_data->angle_end_rad - ca_data->angle_start_rad, ca_data->spin);
+    float angle_step = radial_scan_step * (float) ca_data->spin;
+
+    float best_angle = ca_data->angle_start_rad;
+    int best_score = -1;
+
+    float angle = ca_data->angle_start_rad;
+    size_t steps = (size_t) fabsf(scan_diff / angle_step) + 1;
+    for (size_t i = 0; i < steps; ++i) {
+        int score = 0;
+        float cos_a = cosf(angle);
+        float sin_a = sinf(angle);
+
+        for (size_t arrl = 0; arrl < ca_data->arrow_len; ++arrl) {
+            int x = (int) roundf(ca_data->pivot.x + ((float) arrl * cos_a));
+            int y = (int) roundf(ca_data->pivot.y + ((float) arrl * sin_a));
+
+            if (x >= 0 && (size_t) x < frame->width && y >= 0 &&
+                (size_t) y < frame->height) {
+                size_t index =
+                    gauge_frame_pixel_index(frame, (size_t) x, (size_t) y);
+                uint8_t value = frame->buf[index];
+                score += UINT8_MAX - value;
+            }
+        }
+
+        if (score > best_score) {
+            best_score = score;
+            best_angle = angle;
+        }
+        angle += angle_step;
+    }
+
+    return gauge_utils_normalize_angle(best_angle, 0);
 }

@@ -140,6 +140,6 @@ CheckOptions:
   - key: performance-unnecessary-value-param.AllowedTypes
     value: "std::unique_ptr"
   - key: readability-identifier-length.IgnoredVariableNames
-    value: "ms|ns|io|tx|rx|id|cb|fd|fb|fn|rc|bg"
+    value: "ms|ns|io|tx|rx|id|cb|fd|fb|fn|rc|bg|nx|ny|ni|mx|my|vx|vy|cx|cy|dx|dy|x|y"
   - key: readability-identifier-length.IgnoredParameterNames
-    value: "ms|ns|io|tx|rx|id|cb|fd|fb|fn|rc|bg"
+    value: "ms|ns|io|tx|rx|id|cb|fd|fb|fn|rc|bg|nx|ny|ni|mx|my|vx|vy|cx|cy|dx|dy|x|y"

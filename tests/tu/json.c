@@ -203,8 +203,8 @@ bool tu_json_read_calibration(const char *path, gauge_calibration_data_t *out) {
         return false;
     }
 
-    out->pivot.x = (size_t) jpx->valueint;
-    out->pivot.y = (size_t) jpy->valueint;
+    out->pivot.x = (float) jpx->valuedouble;
+    out->pivot.y = (float) jpy->valuedouble;
     out->angle_start_rad = (float) jstart->valuedouble;
     out->angle_end_rad = (float) jend->valuedouble;
     out->spin = (gauge_spin_t) jspin->valueint;
