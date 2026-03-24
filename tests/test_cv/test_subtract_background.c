@@ -43,12 +43,21 @@ static void test_subtract_background(const char *image_path, const char *bg_path
 CASES(DEF_TEST)
 #undef DEF_TEST
 
-int main(void) {
+static void test_errored_if_frame_size_mismatch() {
+    g_background.width = g_frame.width + 1;
+
+    TEST_ASSERT_EQUAL(GAUGE_ERR_FRAME_SIZE_MISMATCH,
+                      gauge_cv_subtract_background(&g_frame, &g_background));
+}
+
+int main() {
     UNITY_BEGIN();
 
 #define RUN(name, image, bg) RUN_TEST(name);
     CASES(RUN)
 #undef RUN
+
+    RUN_TEST(test_errored_if_frame_size_mismatch);
 
     return UNITY_END();
 }

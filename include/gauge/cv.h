@@ -14,9 +14,12 @@ extern "C" {
  * Each pixel becomes |pixel - bg_pixel|.
  *
  * @param frame  Frame to modify in-place.
- * @param bg     Background frame of identical size.
+ * @param bg     Background frame; must have the same dimensions as frame.
+ * @return GAUGE_OK on success.
+ * @return GAUGE_ERR_FRAME_SIZE_MISMATCH if frame and bg differ in dimensions.
  */
-void gauge_cv_subtract_background(gauge_frame_t *frame, const gauge_frame_t *bg);
+gauge_err_t gauge_cv_subtract_background(gauge_frame_t *frame,
+                                         const gauge_frame_t *bg);
 
 /**
  * Binarizes frame in-place.

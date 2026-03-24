@@ -40,12 +40,17 @@ static inline size_t size_t_max(size_t first, size_t second) {
     return first > second ? first : second;
 }
 
-void gauge_cv_subtract_background(gauge_frame_t *frame, const gauge_frame_t *bg) {
+gauge_err_t gauge_cv_subtract_background(gauge_frame_t *frame,
+                                         const gauge_frame_t *bg) {
+    if (frame->width != bg->width || frame->height != bg->height) {
+        return GAUGE_ERR_FRAME_SIZE_MISMATCH;
+    }
     for (size_t i = 0; i < frame->buf_len; ++i) {
         uint8_t pixel = frame->buf[i];
         uint8_t bg_pixel = bg->buf[i];
         frame->buf[i] = pixel > bg_pixel ? pixel - bg_pixel : bg_pixel - pixel;
     }
+    return GAUGE_OK;
 }
 
 void gauge_cv_binarize(gauge_frame_t *frame, uint8_t threshold) {
@@ -310,9 +315,12 @@ gauge_err_t gauge_calibrate_spin(gauge_frame_t *frame, const gauge_frame_t *bg,
 static gauge_err_t frame_line(gauge_frame_t *frame, const gauge_frame_t *bg,
                               uint8_t threshold, size_t *scratch, size_t scratch_len,
                               gauge_line_t *line_out) {
-    gauge_cv_subtract_background(frame, bg);
+    gauge_err_t err = gauge_cv_subtract_background(frame, bg);
+    if (err != GAUGE_OK) {
+        return err;
+    }
     gauge_cv_binarize(frame, threshold);
-    gauge_err_t err = gauge_cv_extract_largest_blob(frame, scratch, scratch_len);
+    err = gauge_cv_extract_largest_blob(frame, scratch, scratch_len);
     if (err != GAUGE_OK) {
         return err;
     }
@@ -324,9 +332,12 @@ static gauge_err_t frame_angle(gauge_frame_t *frame, const gauge_frame_t *bg,
                                uint8_t threshold, const gauge_pointf_t *pivot,
                                size_t *scratch, size_t scratch_len,
                                float *angle_out) {
-    gauge_cv_subtract_background(frame, bg);
+    gauge_err_t err = gauge_cv_subtract_background(frame, bg);
+    if (err != GAUGE_OK) {
+        return err;
+    }
     gauge_cv_binarize(frame, threshold);
-    gauge_err_t err = gauge_cv_extract_largest_blob(frame, scratch, scratch_len);
+    err = gauge_cv_extract_largest_blob(frame, scratch, scratch_len);
     if (err != GAUGE_OK) {
         return err;
     }
