@@ -43,20 +43,6 @@ static inline size_t size_t_max(size_t first, size_t second) {
     return first > second ? first : second;
 }
 
-void gauge_cv_calculate_background(const gauge_frame_t *frames, size_t frames_len,
-                                   gauge_frame_t *bg_out) {
-    memcpy(bg_out->buf, frames[0].buf, sizeof(uint8_t) * frames[0].buf_len);
-
-    for (size_t frame_i = 1; frame_i < frames_len; ++frame_i) {
-        const gauge_frame_t *frame = &frames[frame_i];
-        for (size_t pixel_i = 0; pixel_i < frame->buf_len; ++pixel_i) {
-            if (frame->buf[pixel_i] > bg_out->buf[pixel_i]) {
-                bg_out->buf[pixel_i] = frame->buf[pixel_i];
-            }
-        }
-    }
-}
-
 void gauge_cv_subtract_background(gauge_frame_t *frame, const gauge_frame_t *bg) {
     for (size_t i = 0; i < frame->buf_len; ++i) {
         frame->buf[i] = abs(frame->buf[i] - bg->buf[i]);
@@ -281,7 +267,21 @@ size_t gauge_cv_arrow_length(const gauge_frame_t *frame,
     return max_dist;
 }
 
-// --- Calibrate by axis intersection ---
+// --- Calibration API ---
+
+gauge_err_t gauge_update_background(const gauge_frame_t *frame, gauge_frame_t *bg) {
+    if (frame->width != bg->width || frame->height != bg->height ||
+        frame->buf_len != bg->buf_len) {
+        return GAUGE_ERR_FRAME_SIZE_MISMATCH;
+    }
+
+    for (size_t i = 0; i < frame->buf_len; ++i) {
+        if (frame->buf[i] > bg->buf[i]) {
+            bg->buf[i] = frame->buf[i];
+        }
+    }
+    return GAUGE_OK;
+}
 
 static gauge_err_t frame_line(gauge_frame_t *frame, const gauge_frame_t *bg,
                               uint8_t threshold, gauge_line_t *line_out) {
@@ -329,16 +329,23 @@ gauge_err_t gauge_calibrate_by_axis_intersection(
         return GAUGE_ERR_FRAME_SIZE_MISMATCH;
     }
 
-    uint8_t *bg_buf = malloc(sizeof(uint8_t) * frames[0].buf_len);
+    size_t bg_size = sizeof(uint8_t) * frames[0].buf_len;
+    uint8_t *bg_buf = malloc(bg_size);
+    memset(bg_buf, 0, bg_size);
     gauge_frame_t bg = {.buf = bg_buf,
                         .buf_len = frames[0].buf_len,
                         .width = frames[0].width,
                         .height = frames[0].height};
-    gauge_cv_calculate_background(frames, frames_len, &bg);
+    gauge_err_t err = GAUGE_OK;
+    for (size_t i = 0; i < frames_len; ++i) {
+        err = gauge_update_background(&frames[i], &bg);
+        if (err != GAUGE_OK) {
+            goto ret;
+        }
+    }
 
     gauge_line_t start_line = {0};
-    gauge_err_t err =
-        frame_line(start_frame, &bg, binarization_threshold, &start_line);
+    err = frame_line(start_frame, &bg, binarization_threshold, &start_line);
     if (err != GAUGE_OK) {
         goto ret;
     }

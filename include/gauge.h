@@ -79,6 +79,20 @@ static inline size_t gauge_frame_pixel_index(const gauge_frame_t *frame,
 }
 
 /**
+ * Updates the background frame with a new frame using per-pixel maximization.
+ *
+ * Call once per frame with bg->buf zeroed on the first call. After processing
+ * all frames, bg->buf holds the per-pixel maximum across the entire sequence.
+ *
+ * @param frame  Grayscale frame to incorporate into the background.
+ * @param bg     Background frame to update in-place; must have the same
+ *               dimensions as frame.
+ * @return GAUGE_OK on success.
+ * @return GAUGE_ERR_FRAME_SIZE_MISMATCH if frame and bg differ in size or buf_len.
+ */
+gauge_err_t gauge_update_background(const gauge_frame_t *frame, gauge_frame_t *bg);
+
+/**
  * Calibrates gauge geometry from a sequence of frames.
  *
  * Expects frames captured while the arrow moves through its full range.

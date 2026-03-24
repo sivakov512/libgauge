@@ -9,16 +9,6 @@ extern "C" {
 #endif
 
 /**
- * Computes the background frame as the per-pixel maximum across all frames.
- *
- * @param frames      Array of grayscale frames of identical size.
- * @param frames_len  Number of frames.
- * @param bg_out      Output frame; must be pre-allocated with the same dimensions.
- */
-void gauge_cv_calculate_background(const gauge_frame_t *frames, size_t frames_len,
-                                   gauge_frame_t *bg_out);
-
-/**
  * Subtracts background from frame in-place.
  *
  * Each pixel becomes |pixel - bg_pixel|.

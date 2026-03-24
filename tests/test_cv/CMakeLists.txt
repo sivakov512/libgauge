@@ -1,5 +1,4 @@
 set(TEST_CV_TESTS
-    test_calculate_background
     test_subtract_background
     test_binarize
     test_extract_largest_blob
