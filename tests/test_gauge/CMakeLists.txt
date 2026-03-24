@@ -1,6 +1,7 @@
 set(TEST_GAUGE_TESTS
     test_update_background
     test_calibrate_by_axis_intersection
+    test_calibrate_spin
     test_scan_radial
 )
 

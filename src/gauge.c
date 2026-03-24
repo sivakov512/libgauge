@@ -269,6 +269,10 @@ size_t gauge_cv_arrow_length(const gauge_frame_t *frame,
 
 // --- Calibration API ---
 
+static gauge_err_t frame_angle(gauge_frame_t *frame, const gauge_frame_t *bg,
+                               uint8_t threshold, const gauge_pointf_t *pivot,
+                               float *angle_out);
+
 gauge_err_t gauge_update_background(const gauge_frame_t *frame, gauge_frame_t *bg) {
     if (frame->width != bg->width || frame->height != bg->height ||
         frame->buf_len != bg->buf_len) {
@@ -280,6 +284,30 @@ gauge_err_t gauge_update_background(const gauge_frame_t *frame, gauge_frame_t *b
             bg->buf[i] = frame->buf[i];
         }
     }
+    return GAUGE_OK;
+}
+
+gauge_err_t gauge_calibrate_spin(gauge_frame_t *frame, const gauge_frame_t *bg,
+                                 uint8_t binarization_threshold,
+                                 gauge_calibration_data_t *ca_data) {
+    if (frame->width != bg->width || frame->height != bg->height ||
+        frame->buf_len != bg->buf_len) {
+        return GAUGE_ERR_FRAME_SIZE_MISMATCH;
+    }
+
+    float angle;
+    gauge_err_t err =
+        frame_angle(frame, bg, binarization_threshold, &ca_data->pivot, &angle);
+    if (err != GAUGE_OK) {
+        return err;
+    }
+
+    float diff = angle - ca_data->angle_start_rad;
+    if (fabsf(diff) <= DIRECTION_SEARCH_STEP_RAD) {
+        return GAUGE_ERR_SPIN_UNDETERMINED;
+    }
+
+    ca_data->spin = diff > 0 ? GAUGE_SPIN_CW : GAUGE_SPIN_CCW;
     return GAUGE_OK;
 }
 
@@ -365,21 +393,15 @@ gauge_err_t gauge_calibrate_by_axis_intersection(
     float start_angle =
         atan2f(start_line.origin.y - pivot.y, start_line.origin.x - pivot.x);
 
-    int8_t direction = 0;
+    gauge_calibration_data_t temp_ca = {
+        .pivot = pivot, .angle_start_rad = start_angle, .spin = GAUGE_SPIN_UNKNOWN};
     for (size_t i = 1; i < frames_len - 1; ++i) {
-        float angle;
-        if (frame_angle(&frames[i], &bg, binarization_threshold, &pivot, &angle) !=
-            GAUGE_OK) {
-            continue;
-        }
-
-        float diff = angle - start_angle;
-        if (fabsf(diff) > DIRECTION_SEARCH_STEP_RAD) {
-            direction = diff > 0 ? 1 : -1;
+        if (gauge_calibrate_spin(&frames[i], &bg, binarization_threshold,
+                                 &temp_ca) == GAUGE_OK) {
             break;
         }
     }
-    if (direction == 0) {
+    if (temp_ca.spin == GAUGE_SPIN_UNKNOWN) {
         err = GAUGE_ERR_SPIN_UNDETERMINED;
         goto ret;
     }
@@ -393,7 +415,7 @@ gauge_err_t gauge_calibrate_by_axis_intersection(
         .pivot = pivot,
         .angle_start_rad = start_angle,
         .angle_end_rad = end_angle,
-        .spin = direction,
+        .spin = temp_ca.spin,
         .arrow_len = length,
     };
 
