@@ -19,6 +19,8 @@ static gauge_frame_t g_last;
 static uint8_t g_bg_buf[TU_FRAME_BUF_LEN];
 static gauge_frame_t g_bg;
 
+static size_t g_scratch[GAUGE_EXTRACT_BLOB_SCRATCH_SIZE(TU_FRAME_BUF_LEN)];
+
 static tu_image_t g_imgs[MAX_FRAMES];
 static gauge_frame_t g_frames[MAX_FRAMES];
 
@@ -80,9 +82,10 @@ static void test_calibrate_by_axis_intersection(const char *first_img_path,
     tu_to_frames(&g_imgs[1], &g_last, 1);
 
     gauge_calibration_data_t ca_data;
-    TEST_ASSERT_EQUAL(GAUGE_OK, gauge_calibrate_by_axis_intersection(
-                                    &g_first, &g_last, &g_bg,
-                                    GAUGE_BINARIZATION_THRESHOLD, &ca_data));
+    TEST_ASSERT_EQUAL(GAUGE_OK,
+                      gauge_calibrate_by_axis_intersection(
+                          &g_first, &g_last, &g_bg, GAUGE_BINARIZATION_THRESHOLD,
+                          g_scratch, TU_FRAME_BUF_LEN, &ca_data));
 
     TEST_ASSERT_EQUAL(GAUGE_SPIN_UNKNOWN, ca_data.spin);
     SNAPSHOT_ASSERT_CALIBRATION(name, &ca_data);
@@ -106,9 +109,20 @@ static void test_errored_if_frame_size_mismatch() {
     gauge_calibration_data_t ca_data;
 
     gauge_err_t err = gauge_calibrate_by_axis_intersection(
-        &g_first, &g_last, &g_bg, GAUGE_BINARIZATION_THRESHOLD, &ca_data);
+        &g_first, &g_last, &g_bg, GAUGE_BINARIZATION_THRESHOLD, g_scratch,
+        TU_FRAME_BUF_LEN, &ca_data);
 
     TEST_ASSERT_EQUAL(GAUGE_ERR_FRAME_SIZE_MISMATCH, err);
+}
+
+static void test_errored_if_scratch_too_small() {
+    gauge_calibration_data_t ca_data;
+
+    gauge_err_t err = gauge_calibrate_by_axis_intersection(
+        &g_first, &g_last, &g_bg, GAUGE_BINARIZATION_THRESHOLD, g_scratch,
+        TU_FRAME_BUF_LEN - 1, &ca_data);
+
+    TEST_ASSERT_EQUAL(GAUGE_ERR_SCRATCH_BUF_TOO_SMALL, err);
 }
 
 int main() {
@@ -119,6 +133,7 @@ int main() {
 #undef RUN
 
     RUN_TEST(test_errored_if_frame_size_mismatch);
+    RUN_TEST(test_errored_if_scratch_too_small);
 
     return UNITY_END();
 }

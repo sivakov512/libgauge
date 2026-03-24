@@ -3,7 +3,6 @@
 #include <math.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <stdlib.h>
 #include <string.h>
 
 // --- Utils ---
@@ -45,7 +44,9 @@ static inline size_t size_t_max(size_t first, size_t second) {
 
 void gauge_cv_subtract_background(gauge_frame_t *frame, const gauge_frame_t *bg) {
     for (size_t i = 0; i < frame->buf_len; ++i) {
-        frame->buf[i] = abs(frame->buf[i] - bg->buf[i]);
+        uint8_t pixel = frame->buf[i];
+        uint8_t bg_pixel = bg->buf[i];
+        frame->buf[i] = pixel > bg_pixel ? pixel - bg_pixel : bg_pixel - pixel;
     }
 }
 
@@ -91,22 +92,23 @@ static size_t flood_fill(gauge_frame_t *frame, size_t index, uint8_t label,
     return size;
 }
 
-gauge_err_t gauge_cv_extract_largest_blob(gauge_frame_t *frame) {
+gauge_err_t gauge_cv_extract_largest_blob(gauge_frame_t *frame, size_t *flood_stack,
+                                          size_t flood_stack_len) {
+    if (flood_stack_len < frame->buf_len) {
+        return GAUGE_ERR_SCRATCH_BUF_TOO_SMALL;
+    }
+
     uint8_t max_label = 0;
     size_t max_label_size = 0;
-
-    gauge_err_t err = GAUGE_OK;
-    size_t *stack = malloc(sizeof(size_t) * frame->buf_len);
 
     uint8_t label = BINARIZE_UP + 1;
     for (size_t index = 0; index < frame->buf_len; ++index) {
         if (label == UINT8_MAX) {
-            err = GAUGE_ERR_TOO_MANY_BLOBS;
-            goto ret;
+            return GAUGE_ERR_TOO_MANY_BLOBS;
         }
 
         if (frame->buf[index] == BINARIZE_UP) {
-            size_t label_size = flood_fill(frame, index, label, stack);
+            size_t label_size = flood_fill(frame, index, label, flood_stack);
             if (label_size > max_label_size) {
                 max_label = label;
                 max_label_size = label_size;
@@ -116,21 +118,13 @@ gauge_err_t gauge_cv_extract_largest_blob(gauge_frame_t *frame) {
     }
 
     if (max_label == 0) {
-        err = GAUGE_ERR_BLOB_NOT_FOUND;
-        goto ret;
+        return GAUGE_ERR_BLOB_NOT_FOUND;
     }
 
     for (size_t i = 0; i < frame->buf_len; ++i) {
-        if (frame->buf[i] == max_label) {
-            frame->buf[i] = BINARIZE_UP;
-        } else {
-            frame->buf[i] = BINARIZE_DOWN;
-        }
+        frame->buf[i] = frame->buf[i] == max_label ? BINARIZE_UP : BINARIZE_DOWN;
     }
-
-ret:
-    free(stack);
-    return err;
+    return GAUGE_OK;
 }
 
 static gauge_err_t center_of_mass(const gauge_frame_t *frame,
@@ -271,6 +265,7 @@ size_t gauge_cv_arrow_length(const gauge_frame_t *frame,
 
 static gauge_err_t frame_angle(gauge_frame_t *frame, const gauge_frame_t *bg,
                                uint8_t threshold, const gauge_pointf_t *pivot,
+                               size_t *scratch, size_t scratch_len,
                                float *angle_out);
 
 gauge_err_t gauge_update_background(const gauge_frame_t *frame, gauge_frame_t *bg) {
@@ -288,7 +283,8 @@ gauge_err_t gauge_update_background(const gauge_frame_t *frame, gauge_frame_t *b
 }
 
 gauge_err_t gauge_calibrate_spin(gauge_frame_t *frame, const gauge_frame_t *bg,
-                                 uint8_t binarization_threshold,
+                                 uint8_t binarization_threshold, size_t *scratch,
+                                 size_t scratch_len,
                                  gauge_calibration_data_t *ca_data) {
     if (frame->width != bg->width || frame->height != bg->height ||
         frame->buf_len != bg->buf_len) {
@@ -296,8 +292,8 @@ gauge_err_t gauge_calibrate_spin(gauge_frame_t *frame, const gauge_frame_t *bg,
     }
 
     float angle;
-    gauge_err_t err =
-        frame_angle(frame, bg, binarization_threshold, &ca_data->pivot, &angle);
+    gauge_err_t err = frame_angle(frame, bg, binarization_threshold, &ca_data->pivot,
+                                  scratch, scratch_len, &angle);
     if (err != GAUGE_OK) {
         return err;
     }
@@ -312,10 +308,11 @@ gauge_err_t gauge_calibrate_spin(gauge_frame_t *frame, const gauge_frame_t *bg,
 }
 
 static gauge_err_t frame_line(gauge_frame_t *frame, const gauge_frame_t *bg,
-                              uint8_t threshold, gauge_line_t *line_out) {
+                              uint8_t threshold, size_t *scratch, size_t scratch_len,
+                              gauge_line_t *line_out) {
     gauge_cv_subtract_background(frame, bg);
     gauge_cv_binarize(frame, threshold);
-    gauge_err_t err = gauge_cv_extract_largest_blob(frame);
+    gauge_err_t err = gauge_cv_extract_largest_blob(frame, scratch, scratch_len);
     if (err != GAUGE_OK) {
         return err;
     }
@@ -325,10 +322,11 @@ static gauge_err_t frame_line(gauge_frame_t *frame, const gauge_frame_t *bg,
 
 static gauge_err_t frame_angle(gauge_frame_t *frame, const gauge_frame_t *bg,
                                uint8_t threshold, const gauge_pointf_t *pivot,
+                               size_t *scratch, size_t scratch_len,
                                float *angle_out) {
     gauge_cv_subtract_background(frame, bg);
     gauge_cv_binarize(frame, threshold);
-    gauge_err_t err = gauge_cv_extract_largest_blob(frame);
+    gauge_err_t err = gauge_cv_extract_largest_blob(frame, scratch, scratch_len);
     if (err != GAUGE_OK) {
         return err;
     }
@@ -345,7 +343,8 @@ static gauge_err_t frame_angle(gauge_frame_t *frame, const gauge_frame_t *bg,
 
 gauge_err_t gauge_calibrate_by_axis_intersection(
     gauge_frame_t *first, gauge_frame_t *last, const gauge_frame_t *bg,
-    uint8_t binarization_threshold, gauge_calibration_data_t *ca_data_out) {
+    uint8_t binarization_threshold, size_t *scratch, size_t scratch_len,
+    gauge_calibration_data_t *ca_data_out) {
     if (first->width != last->width || first->height != last->height ||
         first->buf_len != last->buf_len || first->width != bg->width ||
         first->height != bg->height || first->buf_len != bg->buf_len) {
@@ -353,13 +352,15 @@ gauge_err_t gauge_calibrate_by_axis_intersection(
     }
 
     gauge_line_t start_line = {0};
-    gauge_err_t err = frame_line(first, bg, binarization_threshold, &start_line);
+    gauge_err_t err = frame_line(first, bg, binarization_threshold, scratch,
+                                 scratch_len, &start_line);
     if (err != GAUGE_OK) {
         return err;
     }
 
     gauge_line_t end_line = {0};
-    err = frame_line(last, bg, binarization_threshold, &end_line);
+    err = frame_line(last, bg, binarization_threshold, scratch, scratch_len,
+                     &end_line);
     if (err != GAUGE_OK) {
         return err;
     }

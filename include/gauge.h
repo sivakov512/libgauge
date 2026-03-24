@@ -63,7 +63,17 @@ typedef enum {
     GAUGE_ERR_AXES_NOT_INTERSECTING,
     GAUGE_ERR_SPIN_UNDETERMINED,
     GAUGE_ERR_FRAME_SIZE_MISMATCH,
+    GAUGE_ERR_SCRATCH_BUF_TOO_SMALL,
 } gauge_err_t;
+
+/**
+ * Minimum number of size_t elements required for the scratch buffer passed to
+ * gauge_cv_extract_largest_blob, gauge_calibrate_spin, and
+ * gauge_calibrate_by_axis_intersection.
+ *
+ * @param buf_len  Frame buffer length in bytes (frame->buf_len).
+ */
+#define GAUGE_EXTRACT_BLOB_SCRATCH_SIZE(buf_len) (buf_len)
 
 /**
  * Returns the buffer index of pixel at (pos_x, pos_y).
@@ -112,17 +122,23 @@ gauge_err_t gauge_update_background(const gauge_frame_t *frame, gauge_frame_t *b
  * @param bg                      Background frame; must match first and last in
  *                                dimensions and buf_len.
  * @param binarization_threshold  Pixel intensity threshold for binarization.
- * @param ca_data_out             Output calibration data; spin is
- * GAUGE_SPIN_UNKNOWN.
+ * @param scratch      Scratch buffer for flood-fill; must hold at least
+ *                     GAUGE_EXTRACT_BLOB_SCRATCH_SIZE(first->buf_len) elements.
+ * @param scratch_len  Number of size_t elements in scratch.
+ * @param ca_data_out  Output calibration data; spin is GAUGE_SPIN_UNKNOWN.
+ *                                GAUGE_SPIN_UNKNOWN.
  * @return GAUGE_OK on success.
  * @return GAUGE_ERR_FRAME_SIZE_MISMATCH if first, last, or bg differ in size.
  * @return GAUGE_ERR_BLOB_NOT_FOUND if no arrow blob is detected.
  * @return GAUGE_ERR_TOO_MANY_BLOBS if blob count exceeds UINT8_MAX (255).
  * @return GAUGE_ERR_AXES_NOT_INTERSECTING if the two arrow lines are parallel.
+ * @return GAUGE_ERR_SCRATCH_BUF_TOO_SMALL if scratch_len <
+ *         GAUGE_EXTRACT_BLOB_SCRATCH_SIZE(first->buf_len).
  */
 gauge_err_t gauge_calibrate_by_axis_intersection(
     gauge_frame_t *first, gauge_frame_t *last, const gauge_frame_t *bg,
-    uint8_t binarization_threshold, gauge_calibration_data_t *ca_data_out);
+    uint8_t binarization_threshold, size_t *scratch, size_t scratch_len,
+    gauge_calibration_data_t *ca_data_out);
 
 /**
  * Determines the rotation direction of the arrow from a single frame.
@@ -141,17 +157,23 @@ gauge_err_t gauge_calibrate_by_axis_intersection(
  * @param bg                      Background frame; must have the same dimensions
  *                                as frame.
  * @param binarization_threshold  Pixel intensity threshold for binarization.
- * @param ca_data                 Calibration data with pivot and angle_start_rad
- *                                already filled; spin is written on success.
+ * @param scratch      Scratch buffer for flood-fill; must hold at least
+ *                     GAUGE_EXTRACT_BLOB_SCRATCH_SIZE(frame->buf_len) elements.
+ * @param scratch_len  Number of size_t elements in scratch.
+ * @param ca_data      Calibration data with pivot and angle_start_rad already
+ *                     filled; spin is written on success.
  * @return GAUGE_OK on success.
  * @return GAUGE_ERR_SPIN_UNDETERMINED if the angular difference is too small.
  * @return GAUGE_ERR_FRAME_SIZE_MISMATCH if frame and bg differ in dimensions or
  * buf_len.
  * @return GAUGE_ERR_BLOB_NOT_FOUND if no arrow blob is detected.
  * @return GAUGE_ERR_TOO_MANY_BLOBS if blob count exceeds UINT8_MAX (255).
+ * @return GAUGE_ERR_SCRATCH_BUF_TOO_SMALL if scratch_len <
+ *         GAUGE_EXTRACT_BLOB_SCRATCH_SIZE(frame->buf_len).
  */
 gauge_err_t gauge_calibrate_spin(gauge_frame_t *frame, const gauge_frame_t *bg,
-                                 uint8_t binarization_threshold,
+                                 uint8_t binarization_threshold, size_t *scratch,
+                                 size_t scratch_len,
                                  gauge_calibration_data_t *ca_data);
 
 /**
