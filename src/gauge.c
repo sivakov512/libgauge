@@ -344,84 +344,47 @@ static gauge_err_t frame_angle(gauge_frame_t *frame, const gauge_frame_t *bg,
 }
 
 gauge_err_t gauge_calibrate_by_axis_intersection(
-    gauge_frame_t *frames, size_t frames_len, uint8_t binarization_threshold,
-    gauge_calibration_data_t *ca_data_out) {
-    if (frames_len < 3) {
-        return GAUGE_ERR_SPIN_UNDETERMINED;
-    }
-
-    gauge_frame_t *start_frame = &frames[0];
-    gauge_frame_t *end_frame = &frames[frames_len - 1];
-    if (start_frame->height != end_frame->height ||
-        start_frame->width != end_frame->width) {
+    gauge_frame_t *first, gauge_frame_t *last, const gauge_frame_t *bg,
+    uint8_t binarization_threshold, gauge_calibration_data_t *ca_data_out) {
+    if (first->width != last->width || first->height != last->height ||
+        first->buf_len != last->buf_len || first->width != bg->width ||
+        first->height != bg->height || first->buf_len != bg->buf_len) {
         return GAUGE_ERR_FRAME_SIZE_MISMATCH;
     }
 
-    size_t bg_size = sizeof(uint8_t) * frames[0].buf_len;
-    uint8_t *bg_buf = malloc(bg_size);
-    memset(bg_buf, 0, bg_size);
-    gauge_frame_t bg = {.buf = bg_buf,
-                        .buf_len = frames[0].buf_len,
-                        .width = frames[0].width,
-                        .height = frames[0].height};
-    gauge_err_t err = GAUGE_OK;
-    for (size_t i = 0; i < frames_len; ++i) {
-        err = gauge_update_background(&frames[i], &bg);
-        if (err != GAUGE_OK) {
-            goto ret;
-        }
-    }
-
     gauge_line_t start_line = {0};
-    err = frame_line(start_frame, &bg, binarization_threshold, &start_line);
+    gauge_err_t err = frame_line(first, bg, binarization_threshold, &start_line);
     if (err != GAUGE_OK) {
-        goto ret;
+        return err;
     }
 
     gauge_line_t end_line = {0};
-    err = frame_line(end_frame, &bg, binarization_threshold, &end_line);
+    err = frame_line(last, bg, binarization_threshold, &end_line);
     if (err != GAUGE_OK) {
-        goto ret;
+        return err;
     }
 
     gauge_pointf_t pivot;
     err = gauge_cv_intersect_lines(&start_line, &end_line, &pivot);
     if (err != GAUGE_OK) {
-        goto ret;
+        return err;
     }
 
     float start_angle =
         atan2f(start_line.origin.y - pivot.y, start_line.origin.x - pivot.x);
-
-    gauge_calibration_data_t temp_ca = {
-        .pivot = pivot, .angle_start_rad = start_angle, .spin = GAUGE_SPIN_UNKNOWN};
-    for (size_t i = 1; i < frames_len - 1; ++i) {
-        if (gauge_calibrate_spin(&frames[i], &bg, binarization_threshold,
-                                 &temp_ca) == GAUGE_OK) {
-            break;
-        }
-    }
-    if (temp_ca.spin == GAUGE_SPIN_UNKNOWN) {
-        err = GAUGE_ERR_SPIN_UNDETERMINED;
-        goto ret;
-    }
-
-    size_t length = size_t_max(gauge_cv_arrow_length(start_frame, &pivot),
-                               gauge_cv_arrow_length(end_frame, &pivot));
     float end_angle =
         atan2f(end_line.origin.y - pivot.y, end_line.origin.x - pivot.x);
+    size_t length = size_t_max(gauge_cv_arrow_length(first, &pivot),
+                               gauge_cv_arrow_length(last, &pivot));
 
     *ca_data_out = (gauge_calibration_data_t) {
         .pivot = pivot,
         .angle_start_rad = start_angle,
         .angle_end_rad = end_angle,
-        .spin = temp_ca.spin,
+        .spin = GAUGE_SPIN_UNKNOWN,
         .arrow_len = length,
     };
-
-ret:
-    free(bg_buf);
-    return err;
+    return GAUGE_OK;
 }
 
 // --- Scan radial ---

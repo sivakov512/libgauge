@@ -93,29 +93,36 @@ static inline size_t gauge_frame_pixel_index(const gauge_frame_t *frame,
 gauge_err_t gauge_update_background(const gauge_frame_t *frame, gauge_frame_t *bg);
 
 /**
- * Calibrates gauge geometry from a sequence of frames.
+ * Calibrates gauge geometry from two extreme-position frames.
  *
- * Expects frames captured while the arrow moves through its full range.
- * Computes the rotation pivot by subtracting background from the first and last
- * frames, fitting a line through the arrow blob in each, and intersecting the two
- * lines. Spin direction is determined from intermediate frames.
+ * Subtracts bg from first and last, binarizes, fits a line through each arrow
+ * blob, and intersects the two lines to find the rotation pivot. Arrow angles
+ * and length are computed from the blob positions.
  *
- * @param frames                  Array of grayscale frames of identical size.
- * @param frames_len              Number of frames; must be at least 3.
- * @param binarization_threshold  Pixel intensity threshold for binarization after
- *                                background subtraction.
- * @param ca_data_out             Output calibration data.
+ * ca_data_out->spin is set to GAUGE_SPIN_UNKNOWN; call gauge_calibrate_spin
+ * afterward to determine direction.
+ *
+ * first and last are modified in-place (background subtraction, binarization,
+ * blob extraction).
+ *
+ * @param first                   Frame at the minimum arrow position; modified
+ *                                in-place.
+ * @param last                    Frame at the maximum arrow position; modified
+ *                                in-place.
+ * @param bg                      Background frame; must match first and last in
+ *                                dimensions and buf_len.
+ * @param binarization_threshold  Pixel intensity threshold for binarization.
+ * @param ca_data_out             Output calibration data; spin is
+ * GAUGE_SPIN_UNKNOWN.
  * @return GAUGE_OK on success.
- * @return GAUGE_ERR_FRAME_SIZE_MISMATCH if frames differ in size.
+ * @return GAUGE_ERR_FRAME_SIZE_MISMATCH if first, last, or bg differ in size.
  * @return GAUGE_ERR_BLOB_NOT_FOUND if no arrow blob is detected.
  * @return GAUGE_ERR_TOO_MANY_BLOBS if blob count exceeds UINT8_MAX (255).
  * @return GAUGE_ERR_AXES_NOT_INTERSECTING if the two arrow lines are parallel.
- * @return GAUGE_ERR_SPIN_UNDETERMINED if spin direction cannot be determined
- *         (fewer than 3 frames).
  */
 gauge_err_t gauge_calibrate_by_axis_intersection(
-    gauge_frame_t *frames, size_t frames_len, uint8_t binarization_threshold,
-    gauge_calibration_data_t *ca_data_out);
+    gauge_frame_t *first, gauge_frame_t *last, const gauge_frame_t *bg,
+    uint8_t binarization_threshold, gauge_calibration_data_t *ca_data_out);
 
 /**
  * Determines the rotation direction of the arrow from a single frame.

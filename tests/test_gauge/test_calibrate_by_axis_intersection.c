@@ -4,16 +4,48 @@
 #include "tu/fixtures.h"
 #include "tu/image.h"
 #include "tu/snapshot.h"
+#include "tu/utils.h"
 #include "unity.h"
+#include <string.h>
 
 #define MAX_FRAMES ((size_t) 32)
+
+static uint8_t g_first_buf[TU_FRAME_BUF_LEN];
+static gauge_frame_t g_first;
+
+static uint8_t g_last_buf[TU_FRAME_BUF_LEN];
+static gauge_frame_t g_last;
+
+static uint8_t g_bg_buf[TU_FRAME_BUF_LEN];
+static gauge_frame_t g_bg;
 
 static tu_image_t g_imgs[MAX_FRAMES];
 static gauge_frame_t g_frames[MAX_FRAMES];
 
-void setUp(void) {}
+void setUp() {
+    memset(g_bg_buf, 0, sizeof(g_bg_buf));
 
-void tearDown(void) {}
+    g_first = (gauge_frame_t) {
+        .buf = g_first_buf,
+        .buf_len = TU_FRAME_BUF_LEN,
+        .width = TU_IMAGE_WIDTH_MAX,
+        .height = TU_IMAGE_HEIGHT_MAX,
+    };
+    g_last = (gauge_frame_t) {
+        .buf = g_last_buf,
+        .buf_len = TU_FRAME_BUF_LEN,
+        .width = TU_IMAGE_WIDTH_MAX,
+        .height = TU_IMAGE_HEIGHT_MAX,
+    };
+    g_bg = (gauge_frame_t) {
+        .buf = g_bg_buf,
+        .buf_len = TU_FRAME_BUF_LEN,
+        .width = TU_IMAGE_WIDTH_MAX,
+        .height = TU_IMAGE_HEIGHT_MAX,
+    };
+}
+
+void tearDown() {}
 
 static void save_example_on(const char *img_path,
                             const gauge_calibration_data_t *ca_data,
@@ -36,89 +68,57 @@ static void save_examples(const char *first_path, const char *last_path,
     save_example_on(last_path, ca_data, example_name);
 }
 
-static void test_calibrate_by_axis_intersection(const char *images_dir,
-                                                const char *first_path,
-                                                const char *last_path,
+static void test_calibrate_by_axis_intersection(const char *first_img_path,
+                                                const char *last_img_path,
                                                 const char *name) {
-    size_t count;
-    FIXTURES_LOAD_IMAGES(images_dir, g_imgs, MAX_FRAMES, count);
-    tu_to_frames(g_imgs, g_frames, count);
+    FIXTURES_LOAD_FRAME("set/1/background.json", &g_bg);
+
+    FIXTURES_LOAD_IMAGE(first_img_path, &g_imgs[0]);
+    tu_to_frames(&g_imgs[0], &g_first, 1);
+
+    FIXTURES_LOAD_IMAGE(last_img_path, &g_imgs[1]);
+    tu_to_frames(&g_imgs[1], &g_last, 1);
 
     gauge_calibration_data_t ca_data;
-    TEST_ASSERT_EQUAL(GAUGE_OK,
-                      gauge_calibrate_by_axis_intersection(
-                          g_frames, count, GAUGE_BINARIZATION_THRESHOLD, &ca_data));
+    TEST_ASSERT_EQUAL(GAUGE_OK, gauge_calibrate_by_axis_intersection(
+                                    &g_first, &g_last, &g_bg,
+                                    GAUGE_BINARIZATION_THRESHOLD, &ca_data));
 
+    TEST_ASSERT_EQUAL(GAUGE_SPIN_UNKNOWN, ca_data.spin);
     SNAPSHOT_ASSERT_CALIBRATION(name, &ca_data);
 
-    save_examples(first_path, last_path, &ca_data, name);
+    save_examples(first_img_path, last_img_path, &ca_data, name);
 }
 
 #define CASES(X)                                                                    \
-    X(test_calibrate_by_axis_intersection__set_1, "set/1", "set/1/00767591132.jpg", \
+    X(test_calibrate_by_axis_intersection__set_1, "set/1/00767591132.jpg",          \
       "set/1/12756622577.jpg")
 
-#define DEF_TEST(name, dir, first, last)                                            \
-    static void name(void) {                                                        \
-        test_calibrate_by_axis_intersection(dir, first, last, #name);               \
+#define DEF_TEST(name, first, last)                                                 \
+    static void name() {                                                            \
+        test_calibrate_by_axis_intersection(first, last, #name);                    \
     }
 CASES(DEF_TEST)
 #undef DEF_TEST
 
-#define MINIMAL_FRAME_SIZE ((size_t) 4)
-#define MINIMAL_FRAME_BUF_LEN (MINIMAL_FRAME_SIZE * MINIMAL_FRAME_SIZE)
-
-static void test_errored_if_too_few_frames(void) {
-    static uint8_t bufs[2][MINIMAL_FRAME_BUF_LEN];
-    gauge_frame_t frames[2] = {
-        {.buf = bufs[0],
-         .buf_len = MINIMAL_FRAME_BUF_LEN,
-         .width = MINIMAL_FRAME_SIZE,
-         .height = MINIMAL_FRAME_SIZE},
-        {.buf = bufs[1],
-         .buf_len = MINIMAL_FRAME_BUF_LEN,
-         .width = MINIMAL_FRAME_SIZE,
-         .height = MINIMAL_FRAME_SIZE},
-    };
-
+static void test_errored_if_frame_size_mismatch() {
+    g_bg.width = TU_IMAGE_WIDTH_MAX + 1;
     gauge_calibration_data_t ca_data;
-    TEST_ASSERT_EQUAL(GAUGE_ERR_SPIN_UNDETERMINED,
-                      gauge_calibrate_by_axis_intersection(
-                          frames, 2, GAUGE_BINARIZATION_THRESHOLD, &ca_data));
+
+    gauge_err_t err = gauge_calibrate_by_axis_intersection(
+        &g_first, &g_last, &g_bg, GAUGE_BINARIZATION_THRESHOLD, &ca_data);
+
+    TEST_ASSERT_EQUAL(GAUGE_ERR_FRAME_SIZE_MISMATCH, err);
 }
 
-static void test_errored_if_frame_sizes_mismatch(void) {
-    static uint8_t bufs[3][MINIMAL_FRAME_BUF_LEN];
-    gauge_frame_t frames[3] = {
-        {.buf = bufs[0],
-         .buf_len = MINIMAL_FRAME_BUF_LEN,
-         .width = MINIMAL_FRAME_SIZE,
-         .height = MINIMAL_FRAME_SIZE},
-        {.buf = bufs[1],
-         .buf_len = MINIMAL_FRAME_BUF_LEN,
-         .width = MINIMAL_FRAME_SIZE,
-         .height = MINIMAL_FRAME_SIZE},
-        {.buf = bufs[2],
-         .buf_len = MINIMAL_FRAME_BUF_LEN,
-         .width = MINIMAL_FRAME_SIZE + 1,
-         .height = MINIMAL_FRAME_SIZE},
-    };
-
-    gauge_calibration_data_t ca_data;
-    TEST_ASSERT_EQUAL(GAUGE_ERR_FRAME_SIZE_MISMATCH,
-                      gauge_calibrate_by_axis_intersection(
-                          frames, 3, GAUGE_BINARIZATION_THRESHOLD, &ca_data));
-}
-
-int main(void) {
+int main() {
     UNITY_BEGIN();
 
-#define RUN(name, dir, first, last) RUN_TEST(name);
+#define RUN(name, ...) RUN_TEST(name);
     CASES(RUN)
 #undef RUN
 
-    RUN_TEST(test_errored_if_too_few_frames);
-    RUN_TEST(test_errored_if_frame_sizes_mismatch);
+    RUN_TEST(test_errored_if_frame_size_mismatch);
 
     return UNITY_END();
 }
