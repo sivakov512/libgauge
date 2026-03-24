@@ -397,9 +397,13 @@ ret:
 
 // --- Scan radial ---
 
-float gauge_scan_radial(const gauge_frame_t *frame,
-                        const gauge_calibration_data_t *ca_data,
-                        float radial_scan_step) {
+gauge_err_t gauge_scan_radial(const gauge_frame_t *frame,
+                              const gauge_calibration_data_t *ca_data,
+                              float radial_scan_step, float *angle_out) {
+    if (ca_data->spin == GAUGE_SPIN_UNKNOWN) {
+        return GAUGE_ERR_SPIN_UNDETERMINED;
+    }
+
     float scan_diff = gauge_utils_normalize_angle(
         ca_data->angle_end_rad - ca_data->angle_start_rad, ca_data->spin);
     float angle_step = radial_scan_step * (float) ca_data->spin;
@@ -434,5 +438,6 @@ float gauge_scan_radial(const gauge_frame_t *frame,
         angle += angle_step;
     }
 
-    return gauge_utils_normalize_angle(best_angle, 0);
+    *angle_out = gauge_utils_normalize_angle(best_angle, 0);
+    return GAUGE_OK;
 }

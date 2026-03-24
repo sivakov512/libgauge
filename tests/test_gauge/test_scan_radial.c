@@ -33,8 +33,11 @@ static void test_scan_radial(const char *img_path, const char *ca_data_path,
     FIXTURES_LOAD_IMAGE(img_path, &g_img);
     tu_to_frames(&g_img, &g_frame, 1);
 
-    float angle = gauge_scan_radial(&g_frame, &g_ca_data, GAUGE_RADIAL_SCAN_STEP);
+    float angle;
+    gauge_err_t err =
+        gauge_scan_radial(&g_frame, &g_ca_data, GAUGE_RADIAL_SCAN_STEP, &angle);
 
+    TEST_ASSERT_EQUAL(GAUGE_OK, err);
     SNAPSHOT_ASSERT_FLOAT(name, angle, ANGLE_EPSILON);
 
     save_example(img_path, &g_ca_data, angle, name);
@@ -72,12 +75,24 @@ static void test_scan_radial(const char *img_path, const char *ca_data_path,
 CASES(DEF_TEST)
 #undef DEF_TEST
 
+static void test_errored_if_spin_unknown(void) {
+    gauge_calibration_data_t ca_data = {.spin = GAUGE_SPIN_UNKNOWN};
+
+    float angle;
+    gauge_err_t err =
+        gauge_scan_radial(&g_frame, &ca_data, GAUGE_RADIAL_SCAN_STEP, &angle);
+
+    TEST_ASSERT_EQUAL(GAUGE_ERR_SPIN_UNDETERMINED, err);
+}
+
 int main(void) {
     UNITY_BEGIN();
 
 #define RUN(name, ...) RUN_TEST(name);
     CASES(RUN)
 #undef RUN
+
+    RUN_TEST(test_errored_if_spin_unknown);
 
     return UNITY_END();
 }

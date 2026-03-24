@@ -9,6 +9,7 @@ extern "C" {
 
 typedef int8_t gauge_spin_t;
 
+#define GAUGE_SPIN_UNKNOWN ((gauge_spin_t) 0)
 #define GAUGE_SPIN_CW ((gauge_spin_t) 1)
 #define GAUGE_SPIN_CCW ((gauge_spin_t) - 1)
 
@@ -50,7 +51,8 @@ typedef struct {
     float
         angle_start_rad; /**< Arrow angle at the minimum scale position (radians). */
     float angle_end_rad; /**< Arrow angle at the maximum scale position (radians). */
-    gauge_spin_t spin;   /**< Rotation direction: GAUGE_SPIN_CW or GAUGE_SPIN_CCW. */
+    gauge_spin_t spin;   /**< Rotation direction: GAUGE_SPIN_CW, GAUGE_SPIN_CCW, or
+                            GAUGE_SPIN_UNKNOWN if not yet determined. */
     size_t arrow_len;    /**< Arrow length in pixels from pivot to tip. */
 } gauge_calibration_data_t;
 
@@ -106,16 +108,18 @@ gauge_err_t gauge_calibrate_by_axis_intersection(
  *
  * Scans from ca_data->angle_start_rad to ca_data->angle_end_rad in steps of
  * radial_scan_step, accumulating pixel scores along each radial line from the
- * pivot. Returns the angle with the highest score.
+ * pivot. Writes the best-match angle to angle_out.
  *
  * @param frame             Grayscale frame to scan.
  * @param ca_data           Calibration data describing gauge geometry.
  * @param radial_scan_step  Angular step between scanned directions (radians).
- * @return                  Best-match angle in radians, normalized to [-pi, pi].
+ * @param angle_out         Best-match angle in radians, normalized to [-pi, pi].
+ * @return GAUGE_OK on success.
+ * @return GAUGE_ERR_SPIN_UNDETERMINED if ca_data->spin is GAUGE_SPIN_UNKNOWN.
  */
-float gauge_scan_radial(const gauge_frame_t *frame,
-                        const gauge_calibration_data_t *ca_data,
-                        float radial_scan_step);
+gauge_err_t gauge_scan_radial(const gauge_frame_t *frame,
+                              const gauge_calibration_data_t *ca_data,
+                              float radial_scan_step, float *angle_out);
 
 #ifdef __cplusplus
 }
