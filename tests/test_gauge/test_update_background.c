@@ -15,7 +15,7 @@ static gauge_frame_t g_frame;
 static uint8_t g_bg_buf[TU_FRAME_BUF_LEN];
 static gauge_frame_t g_bg;
 
-void setUp(void) {
+void setUp() {
     memset(g_frame_buf, 0, sizeof(g_frame_buf));
     g_frame = (gauge_frame_t) {
         .buf = g_frame_buf,
@@ -33,7 +33,7 @@ void setUp(void) {
     };
 }
 
-void tearDown(void) {}
+void tearDown() {}
 
 static void test_update_background(const char *dir, const char *name) {
     size_t count;
@@ -53,13 +53,13 @@ static void test_update_background(const char *dir, const char *name) {
 #define CASES(X) X(test_update_background__set_1, "set/1")
 
 #define DEF_TEST(name, dir)                                                         \
-    static void name(void) {                                                        \
+    static void name() {                                                            \
         test_update_background(dir, #name);                                         \
     }
 CASES(DEF_TEST)
 #undef DEF_TEST
 
-static void test_errored_if_frame_size_mismatch(void) {
+static void test_errored_if_frame_size_mismatch() {
     g_bg.width = TU_IMAGE_WIDTH_MAX + 1;
 
     gauge_err_t err = gauge_update_background(&g_frame, &g_bg);
@@ -67,7 +67,7 @@ static void test_errored_if_frame_size_mismatch(void) {
     TEST_ASSERT_EQUAL(GAUGE_ERR_FRAME_SIZE_MISMATCH, err);
 }
 
-static void test_errored_if_buf_len_mismatch(void) {
+static void test_errored_if_buf_len_mismatch() {
     g_bg.buf_len = TU_FRAME_BUF_LEN - 1;
 
     gauge_err_t err = gauge_update_background(&g_frame, &g_bg);
@@ -75,7 +75,7 @@ static void test_errored_if_buf_len_mismatch(void) {
     TEST_ASSERT_EQUAL(GAUGE_ERR_FRAME_SIZE_MISMATCH, err);
 }
 
-int main(void) {
+int main() {
     UNITY_BEGIN();
 
 #define RUN(name, ...) RUN_TEST(name);

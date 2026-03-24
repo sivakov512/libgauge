@@ -3,14 +3,14 @@
 #include "tu/fixtures.h"
 #include "unity.h"
 
-void setUp(void) {}
+void setUp() {}
 
-void tearDown(void) {}
+void tearDown() {}
 
 static const size_t SAMPLE_WIDTH = 320;
 static const size_t SAMPLE_HEIGHT = 240;
 
-static void test_to_frame(void) {
+static void test_to_frame() {
     tu_image_t img;
     FIXTURES_LOAD_IMAGE("common/sample_1.jpg", &img);
 
@@ -24,7 +24,7 @@ static void test_to_frame(void) {
     EXAMPLES_SAVE_FRAME("test_to_frame", &frame);
 }
 
-int main(void) {
+int main() {
     UNITY_BEGIN();
 
     RUN_TEST(test_to_frame);

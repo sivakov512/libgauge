@@ -12,9 +12,9 @@ static tu_image_t g_img;
 static gauge_frame_t g_frame;
 static gauge_calibration_data_t g_ca_data;
 
-void setUp(void) {}
+void setUp() {}
 
-void tearDown(void) {}
+void tearDown() {}
 
 static void save_example(const char *img_path,
                          const gauge_calibration_data_t *ca_data, float angle,
@@ -69,13 +69,13 @@ static void test_scan_radial(const char *img_path, const char *ca_data_path,
 // clang-format on
 
 #define DEF_TEST(name, img, ca_data)                                                \
-    static void name(void) {                                                        \
+    static void name() {                                                            \
         test_scan_radial(img, ca_data, #name);                                      \
     }
 CASES(DEF_TEST)
 #undef DEF_TEST
 
-static void test_errored_if_spin_unknown(void) {
+static void test_errored_if_spin_unknown() {
     gauge_calibration_data_t ca_data = {.spin = GAUGE_SPIN_UNKNOWN};
 
     float angle;
@@ -85,7 +85,7 @@ static void test_errored_if_spin_unknown(void) {
     TEST_ASSERT_EQUAL(GAUGE_ERR_SPIN_UNDETERMINED, err);
 }
 
-int main(void) {
+int main() {
     UNITY_BEGIN();
 
 #define RUN(name, ...) RUN_TEST(name);

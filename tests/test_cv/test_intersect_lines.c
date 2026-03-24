@@ -11,9 +11,9 @@ static const float ORDER_EPSILON = 1e-5F;
 static gauge_line_t g_line1;
 static gauge_line_t g_line2;
 
-void setUp(void) {}
+void setUp() {}
 
-void tearDown(void) {}
+void tearDown() {}
 
 static void save_example_on_source(const char *name, const char *suffix,
                                    const char *source_image_path,
@@ -49,7 +49,7 @@ static void test_intersect_lines(const char *line1_path, const char *line2_path,
       "set/1/12756622577.jpg")
 
 #define DEF_TEST(name, l1, l2, src1, src2)                                          \
-    static void name(void) {                                                        \
+    static void name() {                                                            \
         test_intersect_lines(l1, l2, src1, src2, #name);                            \
     }
 CASES(DEF_TEST)
@@ -70,7 +70,7 @@ static void test_doesnt_depend_on_order() {
     TEST_ASSERT_EQUAL(forward.y, reversed.y);
 }
 
-int main(void) {
+int main() {
     UNITY_BEGIN();
 
 #define RUN(name, l1, l2, src1, src2) RUN_TEST(name);

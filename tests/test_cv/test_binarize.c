@@ -8,9 +8,9 @@
 static uint8_t g_frame_buf[TU_FRAME_BUF_LEN] = {0};
 static gauge_frame_t g_frame = {.buf = g_frame_buf, .buf_len = TU_FRAME_BUF_LEN};
 
-void setUp(void) {}
+void setUp() {}
 
-void tearDown(void) {}
+void tearDown() {}
 
 static void test_binarize(const char *frame_path, const char *name) {
     FIXTURES_LOAD_FRAME(frame_path, &g_frame);
@@ -28,13 +28,13 @@ static void test_binarize(const char *frame_path, const char *name) {
     X(test_binarize__set_1_12756622577, "set/1/12756622577_subtracted.json")
 
 #define DEF_TEST(name, frame)                                                       \
-    static void name(void) {                                                        \
+    static void name() {                                                            \
         test_binarize(frame, #name);                                                \
     }
 CASES(DEF_TEST)
 #undef DEF_TEST
 
-int main(void) {
+int main() {
     UNITY_BEGIN();
 
 #define RUN(name, frame) RUN_TEST(name);

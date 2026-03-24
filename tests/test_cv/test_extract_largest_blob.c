@@ -87,7 +87,7 @@ static void test_errored_if_frame_has_no_blobs() {
 }
 
 // Blob spacing of 3 ensures no 8-connected neighbors between blobs.
-// 18x18 grid of blobs in a 54x54 frame = 324 blobs > UINT8_MAX.
+// 18x18 grid of blobs in a 54x54 frame = 324 blobs > 253.
 #define TOO_MANY_FRAME_SIZE ((size_t) 54)
 #define TOO_MANY_FRAME_BUF_LEN (TOO_MANY_FRAME_SIZE * TOO_MANY_FRAME_SIZE)
 #define TOO_MANY_SPACING ((size_t) 3)

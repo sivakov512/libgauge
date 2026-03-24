@@ -11,7 +11,7 @@
 
 static const float ANGLE_EPSILON = 1e-5F;
 
-static bool should_update(void) {
+static bool should_update() {
     const char *val = getenv("UPDATE_SNAPSHOTS");
     return val != NULL && strcmp(val, "1") == 0;
 }

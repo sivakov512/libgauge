@@ -20,6 +20,12 @@ typedef int8_t gauge_spin_t;
 #define GAUGE_RADIAL_SCAN_STEP 0.008726646F
 
 /**
+ * Minimum angular displacement in radians required to determine spin direction
+ * in gauge_calibrate_spin (~10 degrees).
+ */
+#define GAUGE_CALIBRATE_SPIN_MIN_ANGLE_RAD 0.175F
+
+/**
  * Single grayscale video frame.
  *
  * Pixels are stored row-major: pixel at (x, y) is at index y*width + x.
@@ -126,11 +132,10 @@ gauge_err_t gauge_update_background(const gauge_frame_t *frame, gauge_frame_t *b
  *                     GAUGE_EXTRACT_BLOB_SCRATCH_SIZE(first->buf_len) elements.
  * @param scratch_len  Number of size_t elements in scratch.
  * @param ca_data_out  Output calibration data; spin is GAUGE_SPIN_UNKNOWN.
- *                                GAUGE_SPIN_UNKNOWN.
  * @return GAUGE_OK on success.
  * @return GAUGE_ERR_FRAME_SIZE_MISMATCH if first, last, or bg differ in size.
  * @return GAUGE_ERR_BLOB_NOT_FOUND if no arrow blob is detected.
- * @return GAUGE_ERR_TOO_MANY_BLOBS if blob count exceeds UINT8_MAX (255).
+ * @return GAUGE_ERR_TOO_MANY_BLOBS if blob count exceeds 253.
  * @return GAUGE_ERR_AXES_NOT_INTERSECTING if the two arrow lines are parallel.
  * @return GAUGE_ERR_SCRATCH_BUF_TOO_SMALL if scratch_len <
  *         GAUGE_EXTRACT_BLOB_SCRATCH_SIZE(first->buf_len).
@@ -165,9 +170,9 @@ gauge_err_t gauge_calibrate_by_axis_intersection(
  * @return GAUGE_OK on success.
  * @return GAUGE_ERR_SPIN_UNDETERMINED if the angular difference is too small.
  * @return GAUGE_ERR_FRAME_SIZE_MISMATCH if frame and bg differ in dimensions or
- * buf_len.
+ *         buf_len.
  * @return GAUGE_ERR_BLOB_NOT_FOUND if no arrow blob is detected.
- * @return GAUGE_ERR_TOO_MANY_BLOBS if blob count exceeds UINT8_MAX (255).
+ * @return GAUGE_ERR_TOO_MANY_BLOBS if blob count exceeds 253.
  * @return GAUGE_ERR_SCRATCH_BUF_TOO_SMALL if scratch_len <
  *         GAUGE_EXTRACT_BLOB_SCRATCH_SIZE(frame->buf_len).
  */

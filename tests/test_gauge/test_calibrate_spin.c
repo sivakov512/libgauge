@@ -32,7 +32,7 @@ void setUp() {
 
 void tearDown() {}
 
-static void test_errored_if_arrow_displacement_too_small(void) {
+static void test_errored_if_arrow_displacement_too_small() {
     FIXTURES_LOAD_CALIBRATION("set/1/ca_data_no_spin.json", &g_ca_data);
     FIXTURES_LOAD_FRAME("set/1/background.json", &g_bg);
     FIXTURES_LOAD_IMAGE("set/1/01356622581.jpg", &g_img);
@@ -46,7 +46,7 @@ static void test_errored_if_arrow_displacement_too_small(void) {
     TEST_ASSERT_EQUAL(GAUGE_SPIN_UNKNOWN, g_ca_data.spin);
 }
 
-static void test_determines_spin_when_arrow_displaced_enough(void) {
+static void test_determines_spin_when_arrow_displaced_enough() {
     FIXTURES_LOAD_CALIBRATION("set/1/ca_data_no_spin.json", &g_ca_data);
     FIXTURES_LOAD_FRAME("set/1/background.json", &g_bg);
     FIXTURES_LOAD_IMAGE("set/1/02556622581.jpg", &g_img);
@@ -61,12 +61,12 @@ static void test_determines_spin_when_arrow_displaced_enough(void) {
 }
 
 // Blob spacing of 3 ensures no 8-connected neighbors between blobs.
-// 18x18 grid of blobs in a 54x54 frame = 324 blobs > UINT8_MAX.
+// 18x18 grid of blobs in a 54x54 frame = 324 blobs > 253.
 #define TOO_MANY_FRAME_SIZE ((size_t) 54)
 #define TOO_MANY_FRAME_BUF_LEN (TOO_MANY_FRAME_SIZE * TOO_MANY_FRAME_SIZE)
 #define TOO_MANY_SPACING ((size_t) 3)
 
-static void test_errored_if_too_many_blobs(void) {
+static void test_errored_if_too_many_blobs() {
     g_frame = (gauge_frame_t) {.buf = g_frame_buf,
                                .buf_len = TOO_MANY_FRAME_BUF_LEN,
                                .width = TOO_MANY_FRAME_SIZE,
@@ -88,7 +88,7 @@ static void test_errored_if_too_many_blobs(void) {
     TEST_ASSERT_EQUAL(GAUGE_ERR_TOO_MANY_BLOBS, err);
 }
 
-static void test_errored_if_frame_size_mismatch(void) {
+static void test_errored_if_frame_size_mismatch() {
     g_bg.width = TU_IMAGE_WIDTH_MAX + 1;
 
     gauge_err_t err =
@@ -98,7 +98,7 @@ static void test_errored_if_frame_size_mismatch(void) {
     TEST_ASSERT_EQUAL(GAUGE_ERR_FRAME_SIZE_MISMATCH, err);
 }
 
-static void test_errored_if_blob_not_found(void) {
+static void test_errored_if_blob_not_found() {
     // frame == bg → subtraction → all zeros → no blob above threshold
     memset(g_frame_buf, 42, TU_FRAME_BUF_LEN); // NOLINT
     memset(g_bg_buf, 42, TU_FRAME_BUF_LEN);    // NOLINT
@@ -110,7 +110,7 @@ static void test_errored_if_blob_not_found(void) {
     TEST_ASSERT_EQUAL(GAUGE_ERR_BLOB_NOT_FOUND, err);
 }
 
-static void test_errored_if_scratch_too_small(void) {
+static void test_errored_if_scratch_too_small() {
     gauge_err_t err =
         gauge_calibrate_spin(&g_frame, &g_bg, GAUGE_BINARIZATION_THRESHOLD,
                              g_scratch, TU_FRAME_BUF_LEN - 1, &g_ca_data);
@@ -118,7 +118,7 @@ static void test_errored_if_scratch_too_small(void) {
     TEST_ASSERT_EQUAL(GAUGE_ERR_SCRATCH_BUF_TOO_SMALL, err);
 }
 
-int main(void) {
+int main() {
     UNITY_BEGIN();
 
     RUN_TEST(test_errored_if_arrow_displacement_too_small);

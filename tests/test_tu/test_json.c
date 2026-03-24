@@ -3,9 +3,9 @@
 #include <stdint.h>
 #include <string.h>
 
-void setUp(void) {}
+void setUp() {}
 
-void tearDown(void) {}
+void tearDown() {}
 
 #define FRAME_WIDTH 3U
 #define FRAME_HEIGHT 2U
@@ -27,7 +27,7 @@ static const float CA_ANGLE_START = 1.23F;
 static const float CA_ANGLE_END = 4.56F;
 static const size_t CA_ARROW_LEN = 50;
 
-static void test_frame_roundtrip(void) {
+static void test_frame_roundtrip() {
     static uint8_t src_buf[FRAME_PIXELS];
     memcpy(src_buf, FRAME_BUF, sizeof(src_buf));
 
@@ -49,7 +49,7 @@ static void test_frame_roundtrip(void) {
     TEST_ASSERT_EQUAL_MEMORY(src.buf, dst.buf, src.buf_len);
 }
 
-static void test_line_roundtrip(void) {
+static void test_line_roundtrip() {
     gauge_line_t src = {.origin = {.x = LINE_ORIGIN_X, .y = LINE_ORIGIN_Y},
                         .direction = {.x = LINE_DIRECTION_X, .y = LINE_DIRECTION_Y}};
 
@@ -65,7 +65,7 @@ static void test_line_roundtrip(void) {
     TEST_ASSERT_FLOAT_WITHIN(LINE_FLOAT_EPSILON, src.direction.y, dst.direction.y);
 }
 
-static void test_calibration_roundtrip(void) {
+static void test_calibration_roundtrip() {
     gauge_calibration_data_t src = {.pivot = {.x = CA_PIVOT_X, .y = CA_PIVOT_Y},
                                     .angle_start_rad = CA_ANGLE_START,
                                     .angle_end_rad = CA_ANGLE_END,
@@ -87,7 +87,7 @@ static void test_calibration_roundtrip(void) {
     TEST_ASSERT_EQUAL(src.arrow_len, dst.arrow_len);
 }
 
-static void test_float_roundtrip(void) {
+static void test_float_roundtrip() {
     const char *path = TEST_EXAMPLES_DIR "/test_float_roundtrip.json";
     TEST_ASSERT_TRUE(tu_json_write_float(path, FLOAT_VALUE));
 
@@ -96,7 +96,7 @@ static void test_float_roundtrip(void) {
     TEST_ASSERT_FLOAT_WITHIN(FLOAT_EPSILON, FLOAT_VALUE, result);
 }
 
-int main(void) {
+int main() {
     UNITY_BEGIN();
 
     RUN_TEST(test_frame_roundtrip);

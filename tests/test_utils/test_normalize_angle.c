@@ -3,9 +3,9 @@
 
 static const float EPSILON = 1e-5F;
 
-void setUp(void) {}
+void setUp() {}
 
-void tearDown(void) {}
+void tearDown() {}
 
 static void test_normalize_angle(float angle_rad, gauge_spin_t direction,
                                  float expected) {
@@ -28,13 +28,13 @@ static void test_normalize_angle(float angle_rad, gauge_spin_t direction,
 // clang-format on
 
 #define DEF_TEST(name, angle, dir, expected)                                        \
-    static void test_##name(void) {                                                 \
+    static void test_##name() {                                                     \
         test_normalize_angle((angle), (gauge_spin_t) (dir), (expected));            \
     }
 CASES(DEF_TEST) // NOLINT(readability-magic-numbers)
 #undef DEF_TEST
 
-int main(void) {
+int main() {
     UNITY_BEGIN();
 
 #define RUN(name, ...) RUN_TEST(test_##name);

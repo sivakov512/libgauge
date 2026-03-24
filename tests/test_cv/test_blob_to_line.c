@@ -10,9 +10,9 @@
 static uint8_t g_frame_buf[TU_FRAME_BUF_LEN] = {0};
 static gauge_frame_t g_frame = {.buf = g_frame_buf, .buf_len = TU_FRAME_BUF_LEN};
 
-void setUp(void) {}
+void setUp() {}
 
-void tearDown(void) {}
+void tearDown() {}
 
 static void make_example(const char *name, const char *suffix, tu_image_t *img,
                          gauge_line_t *line) {
@@ -52,13 +52,13 @@ static void test_blob_to_line(const char *frame_path, const char *source_image_p
       "set/1/12756622577.jpg")
 
 #define DEF_TEST(name, frame, source)                                               \
-    static void name(void) {                                                        \
+    static void name() {                                                            \
         test_blob_to_line(frame, source, #name);                                    \
     }
 CASES(DEF_TEST)
 #undef DEF_TEST
 
-int main(void) {
+int main() {
     UNITY_BEGIN();
 
 #define RUN(name, frame, source) RUN_TEST(name);

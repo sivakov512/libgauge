@@ -36,8 +36,6 @@ static const int NEIGHBORHOOD[NEIGHBORHOOD_SIZE][2] = {
 
 #define KINDA_ZERO 1e-6F
 
-#define DIRECTION_SEARCH_STEP_RAD 0.175F
-
 static inline size_t size_t_max(size_t first, size_t second) {
     return first > second ? first : second;
 }
@@ -101,6 +99,8 @@ gauge_err_t gauge_cv_extract_largest_blob(gauge_frame_t *frame, size_t *flood_st
     uint8_t max_label = 0;
     size_t max_label_size = 0;
 
+    // Labels 0 (BINARIZE_DOWN) and 1 (BINARIZE_UP) are reserved; blob labels
+    // occupy 2..254, giving a maximum of 253 blobs.
     uint8_t label = BINARIZE_UP + 1;
     for (size_t index = 0; index < frame->buf_len; ++index) {
         if (label == UINT8_MAX) {
@@ -299,7 +299,7 @@ gauge_err_t gauge_calibrate_spin(gauge_frame_t *frame, const gauge_frame_t *bg,
     }
 
     float diff = angle - ca_data->angle_start_rad;
-    if (fabsf(diff) <= DIRECTION_SEARCH_STEP_RAD) {
+    if (fabsf(diff) <= GAUGE_CALIBRATE_SPIN_MIN_ANGLE_RAD) {
         return GAUGE_ERR_SPIN_UNDETERMINED;
     }
 
@@ -332,10 +332,7 @@ static gauge_err_t frame_angle(gauge_frame_t *frame, const gauge_frame_t *bg,
     }
 
     gauge_pointf_t point;
-    err = center_of_mass(frame, &point);
-    if (err != GAUGE_OK) {
-        return err;
-    }
+    center_of_mass(frame, &point);
 
     *angle_out = atan2f(point.y - pivot->y, point.x - pivot->x);
     return GAUGE_OK;
