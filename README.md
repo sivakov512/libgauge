@@ -22,7 +22,7 @@ include(FetchContent)
 FetchContent_Declare(
     gauge
     GIT_REPOSITORY https://github.com/sivakov512/libgauge.git
-    GIT_TAG        v0.0.0
+    GIT_TAG        v1.0.0
 )
 FetchContent_MakeAvailable(gauge)
 
