@@ -15,18 +15,20 @@ Python reference implementation used for algorithm prototyping: [sivakov512/libg
 
 ## Integration
 
+<!--x-release-please-start-version-->
 ```cmake
 include(FetchContent)
 
 FetchContent_Declare(
     gauge
     GIT_REPOSITORY https://github.com/sivakov512/libgauge.git
-    GIT_TAG        main
+    GIT_TAG        v0.0.0
 )
 FetchContent_MakeAvailable(gauge)
 
 target_link_libraries(your_target PRIVATE gauge)
 ```
+<!--x-release-please-end-->
 
 Include the headers you need:
 
