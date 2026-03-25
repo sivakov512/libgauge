@@ -45,7 +45,7 @@ gauge_err_t gauge_cv_subtract_background(gauge_frame_t *frame,
     if (frame->width != bg->width || frame->height != bg->height) {
         return GAUGE_ERR_FRAME_SIZE_MISMATCH;
     }
-    for (size_t i = 0; i < frame->buf_len; ++i) {
+    for (size_t i = 0; i < gauge_frame_buf_len(frame); ++i) {
         uint8_t pixel = frame->buf[i];
         uint8_t bg_pixel = bg->buf[i];
         frame->buf[i] = pixel > bg_pixel ? pixel - bg_pixel : bg_pixel - pixel;
@@ -54,7 +54,7 @@ gauge_err_t gauge_cv_subtract_background(gauge_frame_t *frame,
 }
 
 void gauge_cv_binarize(gauge_frame_t *frame, uint8_t threshold) {
-    for (size_t i = 0; i < frame->buf_len; ++i) {
+    for (size_t i = 0; i < gauge_frame_buf_len(frame); ++i) {
         if (frame->buf[i] > threshold) {
             frame->buf[i] = BINARIZE_UP;
         } else {
@@ -97,7 +97,7 @@ static size_t flood_fill(gauge_frame_t *frame, size_t index, uint8_t label,
 
 gauge_err_t gauge_cv_extract_largest_blob(gauge_frame_t *frame, size_t *flood_stack,
                                           size_t flood_stack_len) {
-    if (flood_stack_len < frame->buf_len) {
+    if (flood_stack_len < GAUGE_SCRATCH_SIZE(frame->width, frame->height)) {
         return GAUGE_ERR_SCRATCH_BUF_TOO_SMALL;
     }
 
@@ -107,7 +107,7 @@ gauge_err_t gauge_cv_extract_largest_blob(gauge_frame_t *frame, size_t *flood_st
     // Labels 0 (BINARIZE_DOWN) and 1 (BINARIZE_UP) are reserved; blob labels
     // occupy 2..254, giving a maximum of 253 blobs.
     uint8_t label = BINARIZE_UP + 1;
-    for (size_t index = 0; index < frame->buf_len; ++index) {
+    for (size_t index = 0; index < gauge_frame_buf_len(frame); ++index) {
         if (label == UINT8_MAX) {
             return GAUGE_ERR_TOO_MANY_BLOBS;
         }
@@ -126,7 +126,7 @@ gauge_err_t gauge_cv_extract_largest_blob(gauge_frame_t *frame, size_t *flood_st
         return GAUGE_ERR_BLOB_NOT_FOUND;
     }
 
-    for (size_t i = 0; i < frame->buf_len; ++i) {
+    for (size_t i = 0; i < gauge_frame_buf_len(frame); ++i) {
         frame->buf[i] = frame->buf[i] == max_label ? BINARIZE_UP : BINARIZE_DOWN;
     }
     return GAUGE_OK;
@@ -274,12 +274,11 @@ static gauge_err_t frame_angle(gauge_frame_t *frame, const gauge_frame_t *bg,
                                float *angle_out);
 
 gauge_err_t gauge_update_background(const gauge_frame_t *frame, gauge_frame_t *bg) {
-    if (frame->width != bg->width || frame->height != bg->height ||
-        frame->buf_len != bg->buf_len) {
+    if (frame->width != bg->width || frame->height != bg->height) {
         return GAUGE_ERR_FRAME_SIZE_MISMATCH;
     }
 
-    for (size_t i = 0; i < frame->buf_len; ++i) {
+    for (size_t i = 0; i < gauge_frame_buf_len(frame); ++i) {
         if (frame->buf[i] > bg->buf[i]) {
             bg->buf[i] = frame->buf[i];
         }
@@ -291,8 +290,7 @@ gauge_err_t gauge_calibrate_spin(gauge_frame_t *frame, const gauge_frame_t *bg,
                                  uint8_t binarization_threshold, size_t *scratch,
                                  size_t scratch_len,
                                  gauge_calibration_data_t *ca_data) {
-    if (frame->width != bg->width || frame->height != bg->height ||
-        frame->buf_len != bg->buf_len) {
+    if (frame->width != bg->width || frame->height != bg->height) {
         return GAUGE_ERR_FRAME_SIZE_MISMATCH;
     }
 
@@ -354,8 +352,7 @@ gauge_err_t gauge_calibrate_by_axis_intersection(
     uint8_t binarization_threshold, size_t *scratch, size_t scratch_len,
     gauge_calibration_data_t *ca_data_out) {
     if (first->width != last->width || first->height != last->height ||
-        first->buf_len != last->buf_len || first->width != bg->width ||
-        first->height != bg->height || first->buf_len != bg->buf_len) {
+        first->width != bg->width || first->height != bg->height) {
         return GAUGE_ERR_FRAME_SIZE_MISMATCH;
     }
 

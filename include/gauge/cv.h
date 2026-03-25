@@ -35,14 +35,14 @@ void gauge_cv_binarize(gauge_frame_t *frame, uint8_t threshold);
  * Extracts the largest connected blob in-place, zeroing all other blobs.
  *
  * @param frame           Binarized frame to modify in-place.
- * @param flood_stack     Scratch buffer for flood-fill; must hold at least
- *                        GAUGE_EXTRACT_BLOB_SCRATCH_SIZE(frame->buf_len) elements.
+ * @param flood_stack     Scratch buffer; must hold at least
+ *                        GAUGE_SCRATCH_SIZE(frame->width, frame->height) elements.
  * @param flood_stack_len Number of size_t elements in flood_stack.
  * @return GAUGE_OK on success.
  * @return GAUGE_ERR_BLOB_NOT_FOUND if no blob pixels are present.
  * @return GAUGE_ERR_TOO_MANY_BLOBS if the number of blobs exceeds 253.
  * @return GAUGE_ERR_SCRATCH_BUF_TOO_SMALL if flood_stack_len <
- *         GAUGE_EXTRACT_BLOB_SCRATCH_SIZE(frame->buf_len).
+ *         GAUGE_SCRATCH_SIZE(frame->width, frame->height).
  */
 gauge_err_t gauge_cv_extract_largest_blob(gauge_frame_t *frame, size_t *flood_stack,
                                           size_t flood_stack_len);

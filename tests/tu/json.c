@@ -65,7 +65,7 @@ bool tu_json_read_frame(const char *path, gauge_frame_t *out) {
     size_t height = (size_t) jheight->valueint;
     size_t pixels = width * height;
 
-    if (pixels > out->buf_len || (size_t) cJSON_GetArraySize(jbuf) != pixels) {
+    if ((size_t) cJSON_GetArraySize(jbuf) != pixels) {
         cJSON_Delete(root);
         return false;
     }
@@ -75,7 +75,6 @@ bool tu_json_read_frame(const char *path, gauge_frame_t *out) {
         out->buf[i] = (uint8_t) item->valueint;
     }
 
-    out->buf_len = pixels;
     out->width = width;
     out->height = height;
 
@@ -93,7 +92,7 @@ bool tu_json_write_frame(const char *path, const gauge_frame_t *frame) {
     cJSON_AddNumberToObject(root, "height", (double) frame->height);
 
     cJSON *jbuf = cJSON_AddArrayToObject(root, "buf");
-    for (size_t i = 0; i < frame->buf_len; i++) {
+    for (size_t i = 0; i < gauge_frame_buf_len(frame); i++) {
         cJSON_AddItemToArray(jbuf, cJSON_CreateNumber(frame->buf[i]));
     }
 

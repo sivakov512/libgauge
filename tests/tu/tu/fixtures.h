@@ -17,7 +17,7 @@ size_t tu_fixtures_load_images(const char *fixtures_dir, const char *rel_dir,
                                tu_image_t *out, size_t max_count);
 
 /* Load gauge_frame_t from JSON at fixtures_dir/rel_path.
- * out->buf and out->buf_len (capacity) must be set before the call.
+ * out->buf must be set before the call.
  * Returns false on error. */
 bool tu_fixtures_load_frame(const char *fixtures_dir, const char *rel_path,
                             gauge_frame_t *out);

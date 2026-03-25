@@ -19,7 +19,6 @@ void setUp() {
     memset(g_frame_buf, 0, sizeof(g_frame_buf));
     g_frame = (gauge_frame_t) {
         .buf = g_frame_buf,
-        .buf_len = TU_FRAME_BUF_LEN,
         .width = TU_IMAGE_WIDTH_MAX,
         .height = TU_IMAGE_HEIGHT_MAX,
     };
@@ -27,7 +26,6 @@ void setUp() {
     memset(g_bg_buf, 0, sizeof(g_bg_buf));
     g_bg = (gauge_frame_t) {
         .buf = g_bg_buf,
-        .buf_len = TU_FRAME_BUF_LEN,
         .width = TU_IMAGE_WIDTH_MAX,
         .height = TU_IMAGE_HEIGHT_MAX,
     };
@@ -67,14 +65,6 @@ static void test_errored_if_frame_size_mismatch() {
     TEST_ASSERT_EQUAL(GAUGE_ERR_FRAME_SIZE_MISMATCH, err);
 }
 
-static void test_errored_if_buf_len_mismatch() {
-    g_bg.buf_len = TU_FRAME_BUF_LEN - 1;
-
-    gauge_err_t err = gauge_update_background(&g_frame, &g_bg);
-
-    TEST_ASSERT_EQUAL(GAUGE_ERR_FRAME_SIZE_MISMATCH, err);
-}
-
 int main() {
     UNITY_BEGIN();
 
@@ -83,7 +73,6 @@ int main() {
 #undef RUN
 
     RUN_TEST(test_errored_if_frame_size_mismatch);
-    RUN_TEST(test_errored_if_buf_len_mismatch);
 
     return UNITY_END();
 }

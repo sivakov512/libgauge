@@ -26,7 +26,6 @@ void tu_to_frames(tu_image_t *imgs, gauge_frame_t *out, size_t count) {
 
         img->channels = 1;
         out[idx].buf = img->buf;
-        out[idx].buf_len = pixels;
         out[idx].width = img->width;
         out[idx].height = img->height;
     }
@@ -48,7 +47,7 @@ void tu_from_frame(const gauge_frame_t *frame, tu_image_t *out) {
 }
 
 void tu_unbinarize(gauge_frame_t *frame) {
-    for (size_t i = 0; i < frame->buf_len; i++) {
+    for (size_t i = 0; i < gauge_frame_buf_len(frame); i++) {
         if (frame->buf[i] != 0) {
             frame->buf[i] = BINARIZE_UP;
         }

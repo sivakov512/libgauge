@@ -47,13 +47,11 @@ void tu_snapshot_assert_frame(const char *snapshots_dir, const char *name,
         file_exists(path),
         "Snapshot not found. Run with UPDATE_SNAPSHOTS=1 to create it.");
 
-    gauge_frame_t stored = {.buf = g_frame_read_buf,
-                            .buf_len = sizeof(g_frame_read_buf)};
+    gauge_frame_t stored = {.buf = g_frame_read_buf};
     TEST_ASSERT_TRUE(tu_json_read_frame(path, &stored));
     TEST_ASSERT_EQUAL_size_t(frame->width, stored.width);
     TEST_ASSERT_EQUAL_size_t(frame->height, stored.height);
-    TEST_ASSERT_EQUAL_size_t(frame->buf_len, stored.buf_len);
-    TEST_ASSERT_EQUAL_MEMORY(frame->buf, stored.buf, frame->buf_len);
+    TEST_ASSERT_EQUAL_MEMORY(frame->buf, stored.buf, gauge_frame_buf_len(frame));
 }
 
 void tu_snapshot_assert_line(const char *snapshots_dir, const char *name,

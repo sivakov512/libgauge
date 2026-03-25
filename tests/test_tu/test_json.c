@@ -31,22 +31,19 @@ static void test_frame_roundtrip() {
     static uint8_t src_buf[FRAME_PIXELS];
     memcpy(src_buf, FRAME_BUF, sizeof(src_buf));
 
-    gauge_frame_t src = {.buf = src_buf,
-                         .buf_len = FRAME_PIXELS,
-                         .width = FRAME_WIDTH,
-                         .height = FRAME_HEIGHT};
+    gauge_frame_t src = {
+        .buf = src_buf, .width = FRAME_WIDTH, .height = FRAME_HEIGHT};
 
     const char *path = TEST_EXAMPLES_DIR "/test_frame_roundtrip.json";
     TEST_ASSERT_TRUE(tu_json_write_frame(path, &src));
 
     static uint8_t dst_buf[FRAME_PIXELS];
-    gauge_frame_t dst = {.buf = dst_buf, .buf_len = sizeof(dst_buf)};
+    gauge_frame_t dst = {.buf = dst_buf};
     TEST_ASSERT_TRUE(tu_json_read_frame(path, &dst));
 
     TEST_ASSERT_EQUAL(src.width, dst.width);
     TEST_ASSERT_EQUAL(src.height, dst.height);
-    TEST_ASSERT_EQUAL(src.buf_len, dst.buf_len);
-    TEST_ASSERT_EQUAL_MEMORY(src.buf, dst.buf, src.buf_len);
+    TEST_ASSERT_EQUAL_MEMORY(src.buf, dst.buf, gauge_frame_buf_len(&src));
 }
 
 static void test_line_roundtrip() {

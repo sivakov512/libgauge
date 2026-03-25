@@ -4,8 +4,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-/* Read gauge_frame_t from JSON file. out->buf and out->buf_len (capacity) must
- * be set by the caller before the call. Returns false on error. */
+/* Read gauge_frame_t from JSON file. out->buf must point to a buffer large
+ * enough to hold width * height bytes as stored in the JSON.
+ * Returns false on error. */
 bool tu_json_read_frame(const char *path, gauge_frame_t *out);
 
 /* Write gauge_frame_t to JSON file.

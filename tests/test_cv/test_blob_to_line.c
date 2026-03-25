@@ -7,10 +7,15 @@
 #include "tu/snapshot.h"
 #include "unity.h"
 
-static uint8_t g_frame_buf[TU_FRAME_BUF_LEN] = {0};
-static gauge_frame_t g_frame = {.buf = g_frame_buf, .buf_len = TU_FRAME_BUF_LEN};
+static uint8_t g_frame_buf[TU_FRAME_BUF_LEN];
+static gauge_frame_t g_frame;
 
-void setUp() {}
+void setUp() {
+    memset(g_frame_buf, 0, TU_FRAME_BUF_LEN);
+    g_frame = (gauge_frame_t) {.buf = g_frame_buf,
+                               .width = TU_IMAGE_WIDTH_MAX,
+                               .height = TU_IMAGE_HEIGHT_MAX};
+}
 
 void tearDown() {}
 
@@ -61,7 +66,7 @@ CASES(DEF_TEST)
 int main() {
     UNITY_BEGIN();
 
-#define RUN(name, frame, source) RUN_TEST(name);
+#define RUN(name, ...) RUN_TEST(name);
     CASES(RUN)
 #undef RUN
 

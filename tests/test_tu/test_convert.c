@@ -19,7 +19,7 @@ static void test_to_frame() {
 
     TEST_ASSERT_EQUAL(SAMPLE_WIDTH, frame.width);
     TEST_ASSERT_EQUAL(SAMPLE_HEIGHT, frame.height);
-    TEST_ASSERT_EQUAL(SAMPLE_WIDTH * SAMPLE_HEIGHT, frame.buf_len);
+    TEST_ASSERT_EQUAL(SAMPLE_WIDTH * SAMPLE_HEIGHT, gauge_frame_buf_len(&frame));
 
     EXAMPLES_SAVE_FRAME("test_to_frame", &frame);
 }

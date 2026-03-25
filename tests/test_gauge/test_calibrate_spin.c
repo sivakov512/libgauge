@@ -5,11 +5,15 @@
 #include <string.h>
 
 static uint8_t g_frame_buf[TU_FRAME_BUF_LEN];
-static uint8_t g_bg_buf[TU_FRAME_BUF_LEN];
-static size_t g_scratch[GAUGE_EXTRACT_BLOB_SCRATCH_SIZE(TU_FRAME_BUF_LEN)];
-static tu_image_t g_img;
 static gauge_frame_t g_frame;
+
+static uint8_t g_bg_buf[TU_FRAME_BUF_LEN];
 static gauge_frame_t g_bg;
+
+static size_t g_scratch[GAUGE_SCRATCH_SIZE(TU_IMAGE_WIDTH_MAX, TU_IMAGE_HEIGHT_MAX)];
+
+static tu_image_t g_img;
+
 static gauge_calibration_data_t g_ca_data;
 
 void setUp() {
@@ -18,13 +22,11 @@ void setUp() {
 
     g_frame = (gauge_frame_t) {
         .buf = g_frame_buf,
-        .buf_len = TU_FRAME_BUF_LEN,
         .width = TU_IMAGE_WIDTH_MAX,
         .height = TU_IMAGE_HEIGHT_MAX,
     };
     g_bg = (gauge_frame_t) {
         .buf = g_bg_buf,
-        .buf_len = TU_FRAME_BUF_LEN,
         .width = TU_IMAGE_WIDTH_MAX,
         .height = TU_IMAGE_HEIGHT_MAX,
     };
@@ -40,7 +42,7 @@ static void test_errored_if_arrow_displacement_too_small() {
 
     gauge_err_t err =
         gauge_calibrate_spin(&g_frame, &g_bg, GAUGE_BINARIZATION_THRESHOLD,
-                             g_scratch, TU_FRAME_BUF_LEN, &g_ca_data);
+                             g_scratch, TU_SCRATCH_SIZE, &g_ca_data);
 
     TEST_ASSERT_EQUAL(GAUGE_ERR_SPIN_UNDETERMINED, err);
     TEST_ASSERT_EQUAL(GAUGE_SPIN_UNKNOWN, g_ca_data.spin);
@@ -54,7 +56,7 @@ static void test_determines_spin_when_arrow_displaced_enough() {
 
     gauge_err_t err =
         gauge_calibrate_spin(&g_frame, &g_bg, GAUGE_BINARIZATION_THRESHOLD,
-                             g_scratch, TU_FRAME_BUF_LEN, &g_ca_data);
+                             g_scratch, TU_SCRATCH_SIZE, &g_ca_data);
 
     TEST_ASSERT_EQUAL(GAUGE_OK, err);
     TEST_ASSERT_EQUAL(GAUGE_SPIN_CCW, g_ca_data.spin);
@@ -68,11 +70,9 @@ static void test_determines_spin_when_arrow_displaced_enough() {
 
 static void test_errored_if_too_many_blobs() {
     g_frame = (gauge_frame_t) {.buf = g_frame_buf,
-                               .buf_len = TOO_MANY_FRAME_BUF_LEN,
                                .width = TOO_MANY_FRAME_SIZE,
                                .height = TOO_MANY_FRAME_SIZE};
     g_bg = (gauge_frame_t) {.buf = g_bg_buf,
-                            .buf_len = TOO_MANY_FRAME_BUF_LEN,
                             .width = TOO_MANY_FRAME_SIZE,
                             .height = TOO_MANY_FRAME_SIZE};
     for (size_t row = 0; row < TOO_MANY_FRAME_SIZE; row += TOO_MANY_SPACING) {
@@ -83,7 +83,7 @@ static void test_errored_if_too_many_blobs() {
 
     gauge_err_t err =
         gauge_calibrate_spin(&g_frame, &g_bg, GAUGE_BINARIZATION_THRESHOLD,
-                             g_scratch, TU_FRAME_BUF_LEN, &g_ca_data);
+                             g_scratch, TU_SCRATCH_SIZE, &g_ca_data);
 
     TEST_ASSERT_EQUAL(GAUGE_ERR_TOO_MANY_BLOBS, err);
 }
@@ -93,7 +93,7 @@ static void test_errored_if_frame_size_mismatch() {
 
     gauge_err_t err =
         gauge_calibrate_spin(&g_frame, &g_bg, GAUGE_BINARIZATION_THRESHOLD,
-                             g_scratch, TU_FRAME_BUF_LEN, &g_ca_data);
+                             g_scratch, TU_SCRATCH_SIZE, &g_ca_data);
 
     TEST_ASSERT_EQUAL(GAUGE_ERR_FRAME_SIZE_MISMATCH, err);
 }
@@ -105,7 +105,7 @@ static void test_errored_if_blob_not_found() {
 
     gauge_err_t err =
         gauge_calibrate_spin(&g_frame, &g_bg, GAUGE_BINARIZATION_THRESHOLD,
-                             g_scratch, TU_FRAME_BUF_LEN, &g_ca_data);
+                             g_scratch, TU_SCRATCH_SIZE, &g_ca_data);
 
     TEST_ASSERT_EQUAL(GAUGE_ERR_BLOB_NOT_FOUND, err);
 }
@@ -113,7 +113,7 @@ static void test_errored_if_blob_not_found() {
 static void test_errored_if_scratch_too_small() {
     gauge_err_t err =
         gauge_calibrate_spin(&g_frame, &g_bg, GAUGE_BINARIZATION_THRESHOLD,
-                             g_scratch, TU_FRAME_BUF_LEN - 1, &g_ca_data);
+                             g_scratch, TU_SCRATCH_SIZE - 1, &g_ca_data);
 
     TEST_ASSERT_EQUAL(GAUGE_ERR_SCRATCH_BUF_TOO_SMALL, err);
 }

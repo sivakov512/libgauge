@@ -19,7 +19,7 @@ static gauge_frame_t g_last;
 static uint8_t g_bg_buf[TU_FRAME_BUF_LEN];
 static gauge_frame_t g_bg;
 
-static size_t g_scratch[GAUGE_EXTRACT_BLOB_SCRATCH_SIZE(TU_FRAME_BUF_LEN)];
+static size_t g_scratch[TU_SCRATCH_SIZE];
 
 static tu_image_t g_imgs[MAX_FRAMES];
 static gauge_frame_t g_frames[MAX_FRAMES];
@@ -29,19 +29,16 @@ void setUp() {
 
     g_first = (gauge_frame_t) {
         .buf = g_first_buf,
-        .buf_len = TU_FRAME_BUF_LEN,
         .width = TU_IMAGE_WIDTH_MAX,
         .height = TU_IMAGE_HEIGHT_MAX,
     };
     g_last = (gauge_frame_t) {
         .buf = g_last_buf,
-        .buf_len = TU_FRAME_BUF_LEN,
         .width = TU_IMAGE_WIDTH_MAX,
         .height = TU_IMAGE_HEIGHT_MAX,
     };
     g_bg = (gauge_frame_t) {
         .buf = g_bg_buf,
-        .buf_len = TU_FRAME_BUF_LEN,
         .width = TU_IMAGE_WIDTH_MAX,
         .height = TU_IMAGE_HEIGHT_MAX,
     };
@@ -82,12 +79,11 @@ static void test_calibrate_by_axis_intersection(const char *first_img_path,
     tu_to_frames(&g_imgs[1], &g_last, 1);
 
     gauge_calibration_data_t ca_data;
-    TEST_ASSERT_EQUAL(GAUGE_OK,
-                      gauge_calibrate_by_axis_intersection(
-                          &g_first, &g_last, &g_bg, GAUGE_BINARIZATION_THRESHOLD,
-                          g_scratch, TU_FRAME_BUF_LEN, &ca_data));
+    gauge_err_t err = gauge_calibrate_by_axis_intersection(
+        &g_first, &g_last, &g_bg, GAUGE_BINARIZATION_THRESHOLD, g_scratch,
+        TU_SCRATCH_SIZE, &ca_data);
 
-    TEST_ASSERT_EQUAL(GAUGE_SPIN_UNKNOWN, ca_data.spin);
+    TEST_ASSERT_EQUAL(GAUGE_OK, err);
     SNAPSHOT_ASSERT_CALIBRATION(name, &ca_data);
 
     save_examples(first_img_path, last_img_path, &ca_data, name);
@@ -110,7 +106,7 @@ static void test_errored_if_frame_size_mismatch() {
 
     gauge_err_t err = gauge_calibrate_by_axis_intersection(
         &g_first, &g_last, &g_bg, GAUGE_BINARIZATION_THRESHOLD, g_scratch,
-        TU_FRAME_BUF_LEN, &ca_data);
+        TU_SCRATCH_SIZE, &ca_data);
 
     TEST_ASSERT_EQUAL(GAUGE_ERR_FRAME_SIZE_MISMATCH, err);
 }
@@ -120,7 +116,7 @@ static void test_errored_if_scratch_too_small() {
 
     gauge_err_t err = gauge_calibrate_by_axis_intersection(
         &g_first, &g_last, &g_bg, GAUGE_BINARIZATION_THRESHOLD, g_scratch,
-        TU_FRAME_BUF_LEN - 1, &ca_data);
+        TU_SCRATCH_SIZE - 1, &ca_data);
 
     TEST_ASSERT_EQUAL(GAUGE_ERR_SCRATCH_BUF_TOO_SMALL, err);
 }

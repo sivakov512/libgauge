@@ -10,9 +10,20 @@ static tu_image_t g_img;
 static gauge_frame_t g_frame;
 
 static uint8_t g_bg_buf[TU_FRAME_BUF_LEN];
-static gauge_frame_t g_background = {.buf = g_bg_buf, .buf_len = TU_FRAME_BUF_LEN};
+static gauge_frame_t g_background = {.buf = g_bg_buf};
 
-void setUp() {}
+void setUp() {
+    g_frame = (gauge_frame_t) {
+        .buf = g_bg_buf,
+        .width = TU_IMAGE_WIDTH_MAX,
+        .height = TU_IMAGE_HEIGHT_MAX,
+    };
+    g_background = (gauge_frame_t) {
+        .buf = g_bg_buf,
+        .width = TU_IMAGE_WIDTH_MAX,
+        .height = TU_IMAGE_HEIGHT_MAX,
+    };
+}
 
 void tearDown() {}
 
@@ -22,9 +33,9 @@ static void test_subtract_background(const char *image_path, const char *bg_path
     tu_to_frames(&g_img, &g_frame, 1);
     FIXTURES_LOAD_FRAME(bg_path, &g_background);
 
-    TEST_ASSERT_EQUAL(GAUGE_OK,
-                      gauge_cv_subtract_background(&g_frame, &g_background));
+    gauge_err_t err = gauge_cv_subtract_background(&g_frame, &g_background);
 
+    TEST_ASSERT_EQUAL(GAUGE_OK, err);
     SNAPSHOT_ASSERT_FRAME(name, &g_frame);
 
     EXAMPLES_SAVE_FRAME(name, &g_frame);
@@ -46,14 +57,15 @@ CASES(DEF_TEST)
 static void test_errored_if_frame_size_mismatch() {
     g_background.width = g_frame.width + 1;
 
-    TEST_ASSERT_EQUAL(GAUGE_ERR_FRAME_SIZE_MISMATCH,
-                      gauge_cv_subtract_background(&g_frame, &g_background));
+    gauge_err_t err = gauge_cv_subtract_background(&g_frame, &g_background);
+
+    TEST_ASSERT_EQUAL(GAUGE_ERR_FRAME_SIZE_MISMATCH, err);
 }
 
 int main() {
     UNITY_BEGIN();
 
-#define RUN(name, image, bg) RUN_TEST(name);
+#define RUN(name, ...) RUN_TEST(name);
     CASES(RUN)
 #undef RUN
 

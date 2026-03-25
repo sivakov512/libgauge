@@ -34,9 +34,9 @@ static void test_intersect_lines(const char *line1_path, const char *line2_path,
     FIXTURES_LOAD_LINE(line2_path, &g_line2);
 
     gauge_pointf_t point;
-    TEST_ASSERT_EQUAL(GAUGE_OK,
-                      gauge_cv_intersect_lines(&g_line1, &g_line2, &point));
+    gauge_err_t err = gauge_cv_intersect_lines(&g_line1, &g_line2, &point);
 
+    TEST_ASSERT_EQUAL(GAUGE_OK, err);
     SNAPSHOT_ASSERT_POINTF(name, &point, POINT_EPSILON);
 
     save_example_on_source(name, "on_first", src1_path, &point);
@@ -73,7 +73,7 @@ static void test_doesnt_depend_on_order() {
 int main() {
     UNITY_BEGIN();
 
-#define RUN(name, l1, l2, src1, src2) RUN_TEST(name);
+#define RUN(name, ...) RUN_TEST(name);
     CASES(RUN)
 #undef RUN
 

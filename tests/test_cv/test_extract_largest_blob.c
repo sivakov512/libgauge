@@ -1,3 +1,4 @@
+#include "gauge.h"
 #include "gauge/cv.h"
 #include "tu/convert.h"
 #include "tu/examples.h"
@@ -6,14 +7,14 @@
 #include "unity.h"
 #include <string.h>
 
-static uint8_t g_frame_buf[TU_FRAME_BUF_LEN] = {0};
-static size_t g_scratch[GAUGE_EXTRACT_BLOB_SCRATCH_SIZE(TU_FRAME_BUF_LEN)];
+static uint8_t g_frame_buf[TU_FRAME_BUF_LEN];
+static size_t g_scratch[TU_SCRATCH_SIZE];
 static gauge_frame_t g_frame;
 
 void setUp() {
+    memset(g_frame_buf, 0, TU_FRAME_BUF_LEN);
     g_frame = (gauge_frame_t) {
         .buf = g_frame_buf,
-        .buf_len = TU_FRAME_BUF_LEN,
         .width = TU_IMAGE_WIDTH_MAX,
         .height = TU_IMAGE_HEIGHT_MAX,
     };
@@ -24,9 +25,10 @@ void tearDown() {}
 static void test_extract_largest_blob(const char *frame_path, const char *name) {
     FIXTURES_LOAD_FRAME(frame_path, &g_frame);
 
-    TEST_ASSERT_EQUAL(GAUGE_OK, gauge_cv_extract_largest_blob(&g_frame, g_scratch,
-                                                              TU_FRAME_BUF_LEN));
+    gauge_err_t err =
+        gauge_cv_extract_largest_blob(&g_frame, g_scratch, TU_SCRATCH_SIZE);
 
+    TEST_ASSERT_EQUAL(GAUGE_OK, err);
     SNAPSHOT_ASSERT_FRAME(name, &g_frame);
 
     tu_unbinarize(&g_frame);
@@ -51,39 +53,39 @@ CASES(DEF_TEST)
 
 static void test_works_well_if_frame_is_a_full_of_blob() {
     g_frame = (gauge_frame_t) {.buf = g_frame_buf,
-                               .buf_len = SYNTHETIC_FRAME_BUF_LEN,
                                .width = SYNTHETIC_FRAME_SIZE,
                                .height = SYNTHETIC_FRAME_SIZE};
     memset(g_frame_buf, 1, SYNTHETIC_FRAME_BUF_LEN);
 
-    TEST_ASSERT_EQUAL(GAUGE_OK, gauge_cv_extract_largest_blob(
-                                    &g_frame, g_scratch, SYNTHETIC_FRAME_BUF_LEN));
+    gauge_err_t err =
+        gauge_cv_extract_largest_blob(&g_frame, g_scratch, SYNTHETIC_FRAME_BUF_LEN);
 
-    TEST_ASSERT_EACH_EQUAL_UINT8(1, g_frame.buf, g_frame.buf_len);
+    TEST_ASSERT_EQUAL(GAUGE_OK, err);
+    TEST_ASSERT_EACH_EQUAL_UINT8(1, g_frame.buf, gauge_frame_buf_len(&g_frame));
 }
 
 static void test_errored_if_scratch_too_small() {
     g_frame = (gauge_frame_t) {.buf = g_frame_buf,
-                               .buf_len = SYNTHETIC_FRAME_BUF_LEN,
                                .width = SYNTHETIC_FRAME_SIZE,
                                .height = SYNTHETIC_FRAME_SIZE};
     memset(g_frame_buf, 1, SYNTHETIC_FRAME_BUF_LEN);
 
-    TEST_ASSERT_EQUAL(GAUGE_ERR_SCRATCH_BUF_TOO_SMALL,
-                      gauge_cv_extract_largest_blob(&g_frame, g_scratch,
-                                                    SYNTHETIC_FRAME_BUF_LEN - 1));
+    gauge_err_t err = gauge_cv_extract_largest_blob(&g_frame, g_scratch,
+                                                    SYNTHETIC_FRAME_BUF_LEN - 1);
+
+    TEST_ASSERT_EQUAL(GAUGE_ERR_SCRATCH_BUF_TOO_SMALL, err);
 }
 
 static void test_errored_if_frame_has_no_blobs() {
     g_frame = (gauge_frame_t) {.buf = g_frame_buf,
-                               .buf_len = SYNTHETIC_FRAME_BUF_LEN,
                                .width = SYNTHETIC_FRAME_SIZE,
                                .height = SYNTHETIC_FRAME_SIZE};
     memset(g_frame_buf, 0, SYNTHETIC_FRAME_BUF_LEN);
 
-    TEST_ASSERT_EQUAL(
-        GAUGE_ERR_BLOB_NOT_FOUND,
-        gauge_cv_extract_largest_blob(&g_frame, g_scratch, SYNTHETIC_FRAME_BUF_LEN));
+    gauge_err_t err =
+        gauge_cv_extract_largest_blob(&g_frame, g_scratch, SYNTHETIC_FRAME_BUF_LEN);
+
+    TEST_ASSERT_EQUAL(GAUGE_ERR_BLOB_NOT_FOUND, err);
 }
 
 // Blob spacing of 3 ensures no 8-connected neighbors between blobs.
@@ -94,7 +96,6 @@ static void test_errored_if_frame_has_no_blobs() {
 
 static void test_errored_if_frame_has_too_many_blobs() {
     g_frame = (gauge_frame_t) {.buf = g_frame_buf,
-                               .buf_len = TOO_MANY_FRAME_BUF_LEN,
                                .width = TOO_MANY_FRAME_SIZE,
                                .height = TOO_MANY_FRAME_SIZE};
     memset(g_frame_buf, 0, TOO_MANY_FRAME_BUF_LEN);
@@ -104,15 +105,16 @@ static void test_errored_if_frame_has_too_many_blobs() {
         }
     }
 
-    TEST_ASSERT_EQUAL(
-        GAUGE_ERR_TOO_MANY_BLOBS,
-        gauge_cv_extract_largest_blob(&g_frame, g_scratch, TOO_MANY_FRAME_BUF_LEN));
+    gauge_err_t err =
+        gauge_cv_extract_largest_blob(&g_frame, g_scratch, TOO_MANY_FRAME_BUF_LEN);
+
+    TEST_ASSERT_EQUAL(GAUGE_ERR_TOO_MANY_BLOBS, err);
 }
 
 int main() {
     UNITY_BEGIN();
 
-#define RUN(name, frame) RUN_TEST(name);
+#define RUN(name, ...) RUN_TEST(name);
     CASES(RUN)
 #undef RUN
 

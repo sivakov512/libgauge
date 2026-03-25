@@ -19,10 +19,7 @@ static void test_snapshot_frame() {
     static uint8_t buf[FRAME_PIXELS];
     memcpy(buf, FRAME_BUF, sizeof(buf));
 
-    gauge_frame_t frame = {.buf = buf,
-                           .buf_len = FRAME_PIXELS,
-                           .width = FRAME_WIDTH,
-                           .height = FRAME_HEIGHT};
+    gauge_frame_t frame = {.buf = buf, .width = FRAME_WIDTH, .height = FRAME_HEIGHT};
 
     SNAPSHOT_ASSERT_FRAME("test_snapshot_frame_frame", &frame);
 }
