@@ -66,8 +66,8 @@ static void test_doesnt_depend_on_order() {
     TEST_ASSERT_EQUAL(GAUGE_OK,
                       gauge_cv_intersect_lines(&g_line2, &g_line1, &reversed));
 
-    TEST_ASSERT_EQUAL(forward.x, reversed.x);
-    TEST_ASSERT_EQUAL(forward.y, reversed.y);
+    TEST_ASSERT_FLOAT_WITHIN(ORDER_EPSILON, forward.x, reversed.x);
+    TEST_ASSERT_FLOAT_WITHIN(ORDER_EPSILON, forward.y, reversed.y);
 }
 
 int main() {
