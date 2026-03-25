@@ -341,7 +341,9 @@ static gauge_err_t frame_angle(gauge_frame_t *frame, const gauge_frame_t *bg,
     }
 
     gauge_pointf_t point;
-    center_of_mass(frame, &point);
+    /* Cannot fail: extract_largest_blob succeeded, so at least one blob pixel
+     * exists. */
+    (void) center_of_mass(frame, &point);
 
     *angle_out = atan2f(point.y - pivot->y, point.x - pivot->x);
     return GAUGE_OK;

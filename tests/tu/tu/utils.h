@@ -1,5 +1,6 @@
 #pragma once
 
+#include "gauge.h"
 #include <limits.h>
 #include <stddef.h>
 #include <stdint.h>

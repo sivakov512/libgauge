@@ -6,6 +6,7 @@
 #include "tu/image.h"
 #include "tu/snapshot.h"
 #include "unity.h"
+#include <string.h>
 
 static uint8_t g_frame_buf[TU_FRAME_BUF_LEN];
 static gauge_frame_t g_frame;

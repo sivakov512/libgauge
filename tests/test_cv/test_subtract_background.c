@@ -14,7 +14,7 @@ static gauge_frame_t g_background = {.buf = g_bg_buf};
 
 void setUp() {
     g_frame = (gauge_frame_t) {
-        .buf = g_bg_buf,
+        /* buf is assigned by tu_to_frames */
         .width = TU_IMAGE_WIDTH_MAX,
         .height = TU_IMAGE_HEIGHT_MAX,
     };
